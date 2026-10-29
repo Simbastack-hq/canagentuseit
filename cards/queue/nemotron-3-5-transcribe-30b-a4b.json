@@ -1,0 +1,52 @@
+{
+  "id": "nemotron-3-5-transcribe-30b-a4b",
+  "created_at": "2026-10-29T20:30:00Z",
+  "status": "skipped",
+  "skip_reason": "Not runnable in the sandbox: ~30B-parameter weights (far over 5 GB) and GPU-oriented serving (vLLM/SGLang); hosted endpoints need third-party accounts. No quickstart code in the launch post.",
+  "tool": {
+    "name": "NVIDIA Nemotron 3.5 Transcribe",
+    "vendor": "NVIDIA",
+    "kind": "other",
+    "homepage": "https://huggingface.co/blog/nvidia/nemotron-transcribe-granary"
+  },
+  "version": {
+    "pinned": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B",
+    "source": "model-id",
+    "package": "nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B",
+    "released_at": "2026-10-28"
+  },
+  "docs_url": "https://huggingface.co/blog/nvidia/nemotron-transcribe-granary",
+  "brief": {
+    "task": "Not runnable in the sandbox. Transcribe a short English audio file with NVIDIA Nemotron 3.5 Transcribe (nvidia/NVIDIA-Nemotron-3.5-Transcribe-30B-A4B) following the official getting-started instructions and print the transcript."
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "\\w+",
+    "version_probe": "cd /work && grep -rhoE 'Nemotron-3.5-Transcribe[-0-9A-Za-z]*' . | sort -u",
+    "must_reference": ["Nemotron-3.5-Transcribe"]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": false,
+    "notable_because": "127 HN points (2026-10-28)"
+  },
+  "scout": {
+    "why_notable": "Open ASR model, 40 languages, claims #1 open-weight on Open ASR English at 5.33% WER. 127 HN points.",
+    "launch_claims": [
+      {
+        "claim": "First among open-weight models on Open ASR English at 5.33% average WER.",
+        "source_url": "https://huggingface.co/blog/nvidia/nemotron-transcribe-granary",
+        "testable_how": "Check the Open ASR leaderboard entry at revisit.",
+        "revisit_after": "2026-11-27"
+      }
+    ],
+    "sources": [
+      "https://huggingface.co/blog/nvidia/nemotron-transcribe-granary"
+    ],
+    "found_via": "HN front page (Algolia, points>50, last 24h)"
+  }
+}

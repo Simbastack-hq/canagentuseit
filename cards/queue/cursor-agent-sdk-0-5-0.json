@@ -1,0 +1,62 @@
+{
+  "id": "cursor-agent-sdk-0-5-0",
+  "created_at": "2026-10-29T20:30:00Z",
+  "status": "needs_key",
+  "tool": {
+    "name": "Cursor Agent SDK",
+    "vendor": "Cursor",
+    "kind": "agent-framework",
+    "homepage": "https://cursor.com/blog/agent-sdk"
+  },
+  "version": {
+    "pinned": "0.5.0",
+    "source": "npm",
+    "package": "@grok/agent-sdk",
+    "released_at": "2026-10-28T20:41:13Z"
+  },
+  "docs_url": "https://cursor.com/docs/agent-sdk/quickstart",
+  "brief": {
+    "task": "Using the Cursor Agent SDK (@grok/agent-sdk 0.5.0), follow the quickstart to build the PR reviewer agent: scaffold the project, add the inspect_pr tool and the other files the quickstart gives, and start the dev server. Then call the inspect_pr tool on the two example React pull requests the quickstart uses (facebook/react PR 35623 and PR 25229). The goal is that PR 35623 is rated trivial complexity and PR 25229 is rated large.",
+    "env": ["CURSOR_API_KEY"]
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "\"complexity\"\\s*:\\s*\"trivial\"[\\s\\S]*\"complexity\"\\s*:\\s*\"large\"",
+    "version_probe": "cd /work && (npm ls -g @grok/agent-sdk || npm ls @grok/agent-sdk || npx --no-install agent-sdk --version || agent-sdk --version)",
+    "must_reference": ["agent-sdk", "inspect_pr"]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": "CURSOR_API_KEY",
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "139 HN points for the GA launch post (2026-10-28); 5 npm releases in its first week"
+  },
+  "scout": {
+    "why_notable": "Cursor's Agent SDK went GA: define agents in code, run locally, deploy with one command. 139 HN points; npm package created 2026-10-22, already at 0.5.0.",
+    "launch_claims": [
+      {
+        "claim": "Deploy to Cursor infrastructure with one command: `agent-sdk deploy`.",
+        "source_url": "https://cursor.com/blog/agent-sdk",
+        "testable_how": "Follow the deployment guide from a fresh project and count the commands needed before the agent is reachable.",
+        "revisit_after": "2026-11-27"
+      },
+      {
+        "claim": "Each agent runs as a single Node process that can be packaged in a container (self-hosting).",
+        "source_url": "https://cursor.com/blog/agent-sdk",
+        "testable_how": "Build the quickstart agent into a container and run it without Cursor infrastructure.",
+        "revisit_after": "2026-11-27"
+      }
+    ],
+    "sources": [
+      "https://cursor.com/blog/agent-sdk",
+      "https://cursor.com/docs/agent-sdk",
+      "https://cursor.com/docs/agent-sdk/quickstart",
+      "https://registry.npmjs.org/@grok/agent-sdk"
+    ],
+    "found_via": "HN front page (Algolia, points>50, last 24h)",
+    "notes": "Quickstart needs `agent-sdk login` (browser sign-in) for model turns; no API-key env var is documented, so CURSOR_API_KEY is a placeholder. NJ: confirm a headless key exists before provisioning, otherwise skip as needs-browser-login. The inspect_pr tool calls may work without login (they hit the public GitHub API), which is why the check targets them. Blog post imports '@cursor/agent-sdk' but the docs and npm use '@grok/agent-sdk' (previously '@cursor/bdk'): a docs/package mismatch worth watching."
+  }
+}
