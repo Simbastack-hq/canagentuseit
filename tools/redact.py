@@ -85,6 +85,30 @@ def redact_obj(o):
     return o
 
 
+def strings(o):
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, list):
+        for x in o:
+            yield from strings(x)
+    elif isinstance(o, dict):
+        for k, v in o.items():
+            yield from strings(k)
+            yield from strings(v)
+
+
+def checkable(path):
+    """Text to scan for leftovers: JSON is scanned by value, so escapes like \n can't fake a match."""
+    text = Path(path).read_text(errors="replace")
+    if Path(path).suffix in (".json", ".jsonl"):
+        try:
+            docs = [json.loads(text)] if Path(path).suffix == ".json" else [json.loads(l) for l in text.splitlines() if l.strip()]
+            return "\n".join(s for d in docs for s in strings(d))
+        except json.JSONDecodeError:
+            pass
+    return text
+
+
 def hits(text):
     return [(rep, m.group(0)[:12] + "…") for rx, rep in R for m in rx.finditer(text)
             if not m.group(0).startswith(("[REDACTED", "/home/[user]", "[host]", "[scratch]"))]
@@ -128,7 +152,7 @@ def make_public(run):
             shutil.copy2(p, dest)
     for n, t in keep.items():
         (pub / n).write_text(t)
-    left = [(str(f), h) for f in pub.rglob("*") if f.is_file() and f.suffix in TEXT for h in hits(f.read_text(errors="replace"))]
+    left = [(str(f), h) for f in pub.rglob("*") if f.is_file() and f.suffix in TEXT for h in hits(checkable(f))]
     if left:
         sys.exit(f"redaction left matches, refusing: {left[:5]}")
     print(f"{n} files redacted into {pub}")
@@ -142,7 +166,7 @@ if __name__ == "__main__":
         bad = 0
         for f in a[1:]:
             try:
-                h = hits(Path(f).read_text(errors="replace"))
+                h = hits(checkable(f))
             except (UnicodeDecodeError, IsADirectoryError, FileNotFoundError):
                 continue
             for rep, sample in h:
