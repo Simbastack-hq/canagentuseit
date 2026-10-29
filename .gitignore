@@ -1,0 +1,6 @@
+results/**/video/
+results/**/work.tgz
+results/**/agent.stderr
+*.tmp
+__pycache__/
+.DS_Store

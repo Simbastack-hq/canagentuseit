@@ -1,0 +1,35 @@
+# caui-sandbox: the box the test agent works in. A plain Linux dev machine: Python 3.11 + uv,
+# Node 22 + npm, git, build tools. No sudo, no secrets baked in, nothing from the tool under test.
+# Rebuilt on purpose (never implicitly): tag caui-sandbox:<YYYYMMDD>; the tag goes into every result.
+# Build from the repo root: podman build -f sandbox/Containerfile -t caui-sandbox:<YYYYMMDD> .
+FROM docker.io/library/node:22-bookworm
+
+ARG CLAUDE_CODE_VERSION=2.1.312
+ARG UV_VERSION=0.13.6
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-venv python3-pip python3-dev build-essential pkg-config \
+      git curl wget ca-certificates jq unzip xz-utils less procps \
+  && rm -rf /var/lib/apt/lists/*
+
+# uv and asciinema (2.x, records the agent's terminal) system-wide
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
+  && UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin uv tool install asciinema==2.4.0
+
+# The agent: Claude Code, pinned. Auto-update and non-essential traffic off so the version holds.
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} && npm cache clean --force
+
+# The node image already has user `node` (uid 1000); rename it `dev`. npm global installs go to ~/.npm-global.
+RUN usermod -l dev -d /home/dev -m node && groupmod -n dev node \
+  && mkdir -p /work /caui /out && chown dev:dev /work /out
+ENV HOME=/home/dev NPM_CONFIG_PREFIX=/home/dev/.npm-global \
+    PATH=/home/dev/.npm-global/bin:/home/dev/.local/bin:/usr/local/bin:/usr/bin:/bin \
+    DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 DISABLE_TELEMETRY=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 TERM=xterm-256color
+
+COPY sandbox/agent.sh /caui/agent.sh
+COPY tools/transcript.py /caui/transcript.py
+USER dev
+WORKDIR /work
+CMD ["sleep", "infinity"]
