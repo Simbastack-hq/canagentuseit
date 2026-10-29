@@ -67,7 +67,10 @@ def result(brief_p, rdir):
     b = json.loads(read(brief_p))
     rdir = Path(rdir)
     atts = [json.loads(read(p)) for p in sorted(rdir.glob("attempt-*/attempt.json"))]
-    hard = lambda a: a["evidence"]["transcript_ok"] and a["evidence"]["check_ran"]
+    # An attempt only counts against the tool if the agent actually worked: transcript, the check ran,
+    # and it stopped for a reason of its own (done or a cap), not our harness or the API failing.
+    hard = lambda a: a["evidence"]["transcript_ok"] and a["evidence"]["check_ran"] and \
+        a["stop_reason"] in ("done", "timeout", "budget", "max_turns") and (a["turns"] or 0) > 1
     sound = lambda a: hard(a) and a["evidence"]["version_ok"] and a["evidence"]["references_tool"]
     needs_review = False
     if not atts:

@@ -137,6 +137,9 @@ def facts(path):
                     f_["stop"] = {"success": "done", "error_max_turns": "max_turns",
                                   "error_max_budget_usd": "budget"}.get(sub, sub or "error")
                     f_["final_text"] = (ev.get("result") or "")[:4000]
+                    # An API failure (bad key, overload, rate limit) is ours, not the tool's.
+                    if ev.get("is_error") and f_["stop"] == "done" or ev.get("terminal_reason") == "api_error":
+                        f_["stop"] = "api_error"
     except FileNotFoundError:
         pass
     seen = []
