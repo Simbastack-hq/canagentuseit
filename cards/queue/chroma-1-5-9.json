@@ -1,0 +1,53 @@
+{
+  "id": "chroma-1-5-9",
+  "created_at": "2026-10-29T21:00:00Z",
+  "status": "queued",
+  "tool": {
+    "name": "Chroma",
+    "vendor": "Chroma",
+    "kind": "sdk",
+    "homepage": "https://www.trychroma.com/"
+  },
+  "version": {
+    "pinned": "1.5.9",
+    "source": "pypi",
+    "package": "chromadb"
+  },
+  "docs_url": "https://docs.trychroma.com/docs/overview/getting-started",
+  "brief": {
+    "task": "Using chromadb 1.5.9, follow Chroma's getting-started guide with the local in-memory client: create the guide's collection, add its two example documents (one about pineapple, one about oranges), and query it with the guide's Florida query text for 2 results. Print the query results.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "(?s)(?=.*\\[\\[\\s*'id[12]',\\s*'id[12]'\\s*\\]\\])(?=.*'distances':\\s*\\[\\[\\s*\\d)",
+    "version_probe": "cd /work && (uv run python -c 'import chromadb;print(chromadb.__version__)' || .venv/bin/python -c 'import chromadb;print(chromadb.__version__)' || python3 -c 'import chromadb;print(chromadb.__version__)')",
+    "must_reference": ["chromadb"]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Backlog: Chroma is on the WATCHLIST backlog; widely used local vector store for agent memory/RAG, not yet tested"
+  },
+  "scout": {
+    "why_notable": "Backlog pick. Chroma is a common first vector store for agent RAG; the first query silently pulls a default embedding model, a real failure point in a fresh box.",
+    "launch_claims": [
+      {
+        "claim": "Query text is embedded automatically (\"Chroma will embed this for you\"), with no embedding setup in the guide.",
+        "source_url": "https://docs.trychroma.com/docs/overview/getting-started",
+        "testable_how": "Run the guide's script in a fresh box with no embedding config and confirm the query returns distances.",
+        "revisit_after": "2026-11-28"
+      }
+    ],
+    "sources": [
+      "https://docs.trychroma.com/docs/overview/getting-started",
+      "https://pypi.org/pypi/chromadb/json"
+    ],
+    "found_via": "WATCHLIST backlog; version from PyPI JSON",
+    "notes": "Default embedding function likely downloads a small ONNX model on first use (needs network from the sandbox). Result order of id1/id2 isn't fixed, so the regex accepts either. Release date of 1.5.9 not obtained."
+  }
+}

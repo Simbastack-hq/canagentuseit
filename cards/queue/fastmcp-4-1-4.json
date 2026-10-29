@@ -1,0 +1,53 @@
+{
+  "id": "fastmcp-4-1-4",
+  "created_at": "2026-10-29T21:00:00Z",
+  "status": "queued",
+  "tool": {
+    "name": "FastMCP",
+    "vendor": "Prefect (FastMCP)",
+    "kind": "sdk",
+    "homepage": "https://gofastmcp.com/"
+  },
+  "version": {
+    "pinned": "4.1.4",
+    "source": "pypi",
+    "package": "fastmcp"
+  },
+  "docs_url": "https://gofastmcp.com/getting-started/quickstart",
+  "brief": {
+    "task": "Using fastmcp 4.1.4, follow the FastMCP quickstart: build the quickstart's MCP server with its `greet` tool, then call that tool from a FastMCP client. Call `greet` with the name \"Ford\" and print what the tool returns.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "Hello, Ford!",
+    "version_probe": "cd /work && (uv run python -c 'import fastmcp;print(fastmcp.__version__)' || .venv/bin/python -c 'import fastmcp;print(fastmcp.__version__)' || python3 -c 'import fastmcp;print(fastmcp.__version__)')",
+    "must_reference": ["fastmcp"]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Backlog: FastMCP is on the WATCHLIST backlog; the most-used Python framework for MCP servers, not yet tested"
+  },
+  "scout": {
+    "why_notable": "Backlog pick (fewer than 3 credential-free launches today). FastMCP is the default way builders write Python MCP servers; now on 4.x, so docs-vs-package drift is a real risk.",
+    "launch_claims": [
+      {
+        "claim": "The quickstart server can be run either with `python my_server.py` or with `fastmcp run my_server.py:mcp`.",
+        "source_url": "https://gofastmcp.com/getting-started/quickstart",
+        "testable_how": "Start the quickstart server both ways at 4.1.x and list its tools from a client.",
+        "revisit_after": "2026-11-28"
+      }
+    ],
+    "sources": [
+      "https://gofastmcp.com/getting-started/quickstart",
+      "https://pypi.org/pypi/fastmcp/json"
+    ],
+    "found_via": "WATCHLIST backlog; version from PyPI JSON",
+    "notes": "Quickstart gives no install command (links to an installation page); PyPI description says `uv add fastmcp`. Upload date of 4.1.4 reported as 2026-10-26 but unverified, so released_at left out. Quickstart shows no expected client output; the check relies on the tool's own f-string."
+  }
+}
