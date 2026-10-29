@@ -1,6 +1,11 @@
+# Raw runs never live in this repo (they stay on the test machine until approved + redacted)
+runs/
+**/raw.jsonl
+**/raw.stderr
+**/mcp.json
 results/**/video/
+results/**/media/
 results/**/work.tgz
-results/**/agent.stderr
 *.tmp
 __pycache__/
 .DS_Store

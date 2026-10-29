@@ -18,15 +18,20 @@
 # a test: CAUI_ENGINE=docker ./sandbox/caui-box start my-run
 set -euo pipefail
 die() { echo "caui-box: $*" >&2; exit 2; }
-ENGINE="${CAUI_ENGINE:-podman}"
-# Under sudo, trust the account database for HOME, not the caller.
+# Under sudo (the lab), nothing from the caller's environment is trusted: fixed engine, paths and
+# HOME from the account database. Run directly (reproducing a test), CAUI_* overrides are allowed.
 HOME="$(getent passwd "$(id -un)" | cut -d: -f6)"; export HOME
-CONF="${CAUI_CONF:-$HOME/.config/caui}"
-HARNESS="${CAUI_HARNESS:-/srv/caui/harness}"
-IMAGE="$(cat "$CONF/image" 2>/dev/null || echo caui-sandbox:latest)"
-RECORDER="$(cat "$CONF/recorder" 2>/dev/null || echo caui-recorder:latest)"
-if [ "$ENGINE" = podman ]; then
-  export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+if [ -n "${SUDO_USER:-}" ]; then
+  ENGINE=/usr/bin/podman; CONF="$HOME/.config/caui"; HARNESS=/srv/caui/harness
+  export PATH=/usr/local/bin:/usr/bin:/bin
+else
+  ENGINE="${CAUI_ENGINE:-podman}"; CONF="${CAUI_CONF:-$HOME/.config/caui}"; HARNESS="${CAUI_HARNESS:-/srv/caui/harness}"
+fi
+case "$(basename "$ENGINE")" in podman|docker) ;; *) die "engine must be podman or docker" ;; esac
+tag_of() { local t; t="$(cat "$CONF/$1" 2>/dev/null || true)"; [[ "$t" =~ ^caui-(sandbox|recorder):[0-9]{8}$ ]] && echo "$t" || echo "caui-$2:latest"; }
+IMAGE="$(tag_of image sandbox)"; RECORDER="$(tag_of recorder recorder)"
+if [ "$(basename "$ENGINE")" = podman ]; then
+  export XDG_RUNTIME_DIR="/run/user/$(id -u)"
   NET="pasta:--no-map-gw"
 else
   NET="${CAUI_DOCKER_NET:-bridge}"
@@ -50,7 +55,10 @@ case "$verb" in
   exec)
     t="${1:-}"; cmd="${2:-}"; [[ "$t" =~ ^[0-9]{1,4}$ ]] && (( t >= 1 && t <= 900 )) || die "timeout 1-900"
     [ -n "$cmd" ] || die "empty command"
-    "$ENGINE" exec -u dev -w /work "$c" timeout --kill-after=10 "$t" bash -lc "$cmd" 2>&1 ;;
+    # Bounded: at most 1 MB of output leaves the box; the exit code is the command's.
+    set +o pipefail
+    "$ENGINE" exec -u dev -w /work "$c" timeout --kill-after=10 "$t" bash -lc "$cmd" 2>&1 | head -c 1000000
+    exit "${PIPESTATUS[0]}" ;;
   put)
     p="${1:-}"; path_ok "$p"
     head -c 5000000 | "$ENGINE" exec -i -u dev "$c" sh -c 'mkdir -p "$(dirname "$1")" && cat > "$1"' _ "$p" ;;
@@ -64,10 +72,12 @@ case "$verb" in
   docswalk)
     urls="$(grep -E '^https?://[^[:space:]]+$' | head -8 || true)"; [ -n "$urls" ] || die "no urls"
     tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT; chmod 777 "$tmp"
-    user=(); [ "$ENGINE" = docker ] && user=(--user "$(id -u):$(id -g)")
+    user=(); [ "$(basename "$ENGINE")" = docker ] && user=(--user "$(id -u):$(id -g)")
     "$ENGINE" run --rm "${user[@]}" --network "$NET" --memory 2g --cpus 2 "${SAFE[@]}" \
       -e URLS="$urls" -v "$tmp:/video" "$RECORDER" >&2
-    cat "$tmp/docs-walk.webm" ;;
+    f="$tmp/docs-walk.webm"
+    [ -f "$f" ] && [ ! -L "$f" ] || die "recorder produced no video"
+    head -c 300000000 <"$f" ;;
   build)
     [ -f "$HARNESS/sandbox/Containerfile" ] || die "no harness at $HARNESS"
     tag="$(date -u +%Y%m%d)"; mkdir -p "$CONF"

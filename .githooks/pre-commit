@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Refuse commits that carry secrets or machine details. Enable once per clone:
+#   git config core.hooksPath .githooks
+set -uo pipefail
+files=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$files" ] && exit 0
+fail=0
+if command -v gitleaks >/dev/null; then
+  gitleaks git --staged --no-banner --redact -v >/dev/null 2>&1 || gitleaks protect --staged --no-banner --redact >/dev/null 2>&1 || { echo "pre-commit: gitleaks found a secret (run: gitleaks git --staged -v)"; fail=1; }
+fi
+# Same patterns the redaction step strips. tools/redact.py holds the patterns themselves, so it's exempt.
+check=$(echo "$files" | grep -v -e '^tools/redact.py$' -e '^LICENSE$' -e '^results/LICENSE$' -e '\.png$' -e '\.webm$' -e '\.mp4$' || true)
+if [ -n "$check" ]; then
+  # shellcheck disable=SC2086
+  python3 tools/redact.py --check $check || { echo "pre-commit: redact.py --check flagged the lines above; run tools/redact.py on the run first"; fail=1; }
+fi
+exit $fail

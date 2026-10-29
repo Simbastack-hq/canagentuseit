@@ -44,9 +44,22 @@ TOOLS = [
 ]
 
 
-def box(*args, stdin=None, timeout=960):
-    p = subprocess.run(BOX + list(args), input=stdin, capture_output=True, timeout=timeout)
-    return p.returncode, p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace")
+def box(*args, stdin=None, timeout=960, cap=2_000_000):
+    """Call caui-box; read at most `cap` bytes of output so a flood can't fill the host's memory."""
+    p = subprocess.Popen(BOX + list(args), stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if stdin is not None:
+        p.stdin.write(stdin)
+        p.stdin.close()
+    try:
+        out = p.stdout.read(cap)
+        p.stdout.close()
+        p.wait(timeout=timeout)
+        err = p.stderr.read(20000)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        return 124, out.decode("utf-8", "replace"), "timeout"
+    return p.returncode, out.decode("utf-8", "replace"), err.decode("utf-8", "replace")
 
 
 def html_to_text(s):
