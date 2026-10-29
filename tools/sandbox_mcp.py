@@ -21,7 +21,8 @@ import time
 RUN = os.environ["CAUI_RUN"]
 BOX = shlex.split(os.environ.get("CAUI_BOX", "caui-box"))
 LOG = os.environ.get("CAUI_LOG")
-MAX_OUT = 30000
+MAX_OUT = 20000   # stays under the agents' tool-output limits, so nothing spills to a host file they can't read
+PAGE = 20000
 
 TOOLS = [
     {"name": "run",
@@ -36,11 +37,14 @@ TOOLS = [
      "inputSchema": {"type": "object", "required": ["path", "content"], "properties": {
          "path": {"type": "string"}, "content": {"type": "string"}}}},
     {"name": "read_file",
-     "description": "Read a file on the box (path under /work or /tmp, first 2 MB).",
-     "inputSchema": {"type": "object", "required": ["path"], "properties": {"path": {"type": "string"}}}},
+     "description": "Read a file on the box (path under /work or /tmp). Returns 20,000 characters at a time; use `offset` for more.",
+     "inputSchema": {"type": "object", "required": ["path"], "properties": {
+         "path": {"type": "string"}, "offset": {"type": "integer", "minimum": 0, "default": 0}}}},
     {"name": "fetch_url",
-     "description": "Fetch a web page or file over HTTP(S) from the box and return it as text (HTML tags stripped, first 60k chars).",
-     "inputSchema": {"type": "object", "required": ["url"], "properties": {"url": {"type": "string"}}}},
+     "description": "Fetch a web page or file over HTTP(S) from the box and return it as text (HTML tags stripped), 20,000 characters at a time. "
+                    "If the page is longer, the result says so; call again with `offset` to read on.",
+     "inputSchema": {"type": "object", "required": ["url"], "properties": {
+         "url": {"type": "string"}, "offset": {"type": "integer", "minimum": 0, "default": 0}}}},
 ]
 
 
@@ -71,6 +75,13 @@ def html_to_text(s):
     return re.sub(r"\n\s*\n\s*\n+", "\n\n", s).strip()
 
 
+def page(text, offset):
+    o = max(0, int(offset or 0))
+    chunk = text[o:o + PAGE]
+    rest = len(text) - (o + len(chunk))
+    return chunk + (f"\n[… {rest} more characters; call again with offset={o + len(chunk)}]" if rest > 0 else "")
+
+
 def call(name, a):
     if name == "run":
         t = int(a.get("timeout_s") or 300)
@@ -87,14 +98,14 @@ def call(name, a):
         return (f"wrote {len(a['content'])} chars to {a['path']}" if rc == 0 else f"error: {err.strip() or out.strip()}"), rc
     if name == "read_file":
         rc, out, err = box("get", RUN, a["path"])
-        return (out if rc == 0 else f"error: {err.strip() or out.strip()}"), rc
+        return (page(out, a.get("offset")) if rc == 0 else f"error: {err.strip() or out.strip()}"), rc
     if name == "fetch_url":
         url = a["url"]
         if not re.match(r"^https?://[^\s'\"]+$", url):
             return "error: not an http(s) URL", 2
         rc, out, err = box("exec", RUN, "60", f"curl -sSL --max-time 45 -A 'Mozilla/5.0 (caui test agent)' {shlex.quote(url)} | head -c 3000000", timeout=120)
         text = html_to_text(out) if "<html" in out[:2000].lower() or "<!doctype" in out[:200].lower() else out
-        return (text[:60000] or f"(empty response) {err.strip()}"), rc
+        return (page(text, a.get("offset")) if text else f"(empty response) {err.strip()}"), rc
     return f"unknown tool {name}", 2
 
 
