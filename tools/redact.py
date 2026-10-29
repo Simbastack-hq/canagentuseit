@@ -120,7 +120,9 @@ def hits(text):
 TEXT = {".json", ".jsonl", ".md", ".txt", ".out", ".log", ".csv", ".srt", ".cast", ".stderr", ".sh", ".py", ".js", ".ts", ".toml", ".yaml", ".yml"}
 COPY_BINARY = {".webm", ".mp4", ".png"}
 WORK_TEXT = {"", ".cfg", ".ini", ".env.example", ".html", ".css", ".mjs", ".cjs", ".tsx", ".jsx", ".rs", ".go", ".rb", ".lock", ".gitignore"}
-SKIP = {"work.tgz", "mcp.json", "raw.stderr"}   # the work tarball is unreviewable as a blob; mcp.json holds host paths
+SKIP = {"work.tgz", "mcp.json", "raw.stderr",   # the work tarball is unreviewable as a blob; mcp.json holds host paths
+        "post.json", "guide-check.json", "brief.in.json", "harness.log"}   # bookkeeping, not part of the record
+SKIP_DIRS = {"media"}   # rendered from public/, never copied back into it
 
 
 def make_public(run):
@@ -131,7 +133,7 @@ def make_public(run):
         shutil.rmtree(pub)
     n = 0
     for p in sorted(run.rglob("*")):
-        if p.is_dir() or pub in p.parents or p.name in SKIP or p.is_symlink():
+        if p.is_dir() or pub in p.parents or p.name in SKIP or p.is_symlink() or SKIP_DIRS & set(p.relative_to(run).parts):
             continue
         rel = p.relative_to(run)
         dest = pub / rel
