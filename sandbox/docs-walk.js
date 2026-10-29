@@ -12,6 +12,13 @@ const fs = require('fs');
     try {
       await page.goto(u, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(2500);
+      // Always on screen: this is a replay for B-roll, not the agent's own browsing.
+      await page.evaluate(() => {
+        const d = document.createElement('div');
+        d.textContent = 'B-roll: replay of the docs pages the agent read (not its live browsing)';
+        d.style.cssText = 'position:fixed;left:24px;bottom:24px;z-index:2147483647;background:rgba(0,0,0,.78);color:#fff;font:600 22px/1.3 system-ui,sans-serif;padding:10px 16px;border-radius:8px;pointer-events:none';
+        document.body.appendChild(d);
+      }).catch(() => {});
       const h = await page.evaluate(() => document.body.scrollHeight);
       for (let y = 0; y < Math.min(h, 6000); y += 300) { await page.mouse.wheel(0, 300); await page.waitForTimeout(250); }
       console.log('ok', u);
