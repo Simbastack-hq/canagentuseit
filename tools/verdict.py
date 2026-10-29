@@ -128,6 +128,8 @@ def result(brief_p, rdir):
                    "tokens": sum(a.get("tokens") or 0 for a in atts),
                    "minutes_to_success": mins, "wall_minutes": round(sum(walls) / 60, 1)},
         "video": sorted(str(p.relative_to(rdir)) for p in rdir.glob("video/*.webm")),
+        # Set when a run didn't use the standard sandbox; the post must say so up front.
+        "fallback": read(rdir / "fallback.txt").strip() or None,
     }
     old = rdir / "result.json"
     if old.exists():

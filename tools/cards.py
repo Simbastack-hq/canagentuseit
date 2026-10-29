@@ -62,6 +62,8 @@ def validate(path):
     for u in re.findall(r"https?://\S+", task):
         if u.rstrip(".,)") != card["docs_url"]:
             errs.append(f"brief.task links {u}; only docs_url may appear (or none)")
+    if not card["check"].get("decoy_script") and card["created_at"] >= "2026-10-30":
+        errs.append("check.decoy_script is required: a plausible but wrong run.sh the check must reject")
     try:
         re.compile(card["check"]["stdout_regex"])
     except re.error as e:

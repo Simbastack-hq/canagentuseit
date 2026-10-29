@@ -28,7 +28,7 @@ tested_version: <pinned version>
 ```
 
 Body, in this order:
-1. **The answer, first line**, scoped to the task, not the whole tool. e.g. "Yes, on the first try: Claude Code (Sonnet 5.5, sandbox tools only) had FastMCP 2.14.1's first server answering a tool call in 4 minutes, using only the docs." Then a facts list, each line its own measure (don't fold them into the badge):
+1. **The answer, first line**, scoped to the task, not the whole tool. e.g. "Yes, on the first try: Claude Code (Sonnet 5.5, sandbox tools only) had FastMCP 2.14.1's first server answering a tool call in 4 minutes, with no outside reference material in the log." Then a facts list, each line its own measure (don't fold them into the badge):
    - **Outcome:** did the task's goal get reached (by which attempt)
    - **Recovery:** how many errors the passing agent hit and fixed on the way (0 = straight through)
    - **Outside help:** whether it left the docs (issue trackers, Q&A, forums) or never opened them (`prior_knowledge` true → "it never opened the docs, so this measures what the model already knew")
@@ -40,6 +40,7 @@ Body, in this order:
 4. **Where it got stuck** (only if it did): the step, the quote, whose it was. "The docs say X; version Y does Z." If the agent misread a clear step, say the agent did.
 5. **The retry** (if any): what Codex did differently.
 6. **How we checked**: the check command and its output tail, the version the probe saw, the decoy result (the check failed on an untouched box, as it should). One line on the method with a link to `https://github.com/Simbastack-hq/canagentuseit/blob/main/SPEC.md`.
+6b. **Run conditions.** If `result.json` has `fallback` set, put its text in a short italic note directly under the facts list, before anything else. Never write "using only the docs" as a guarantee: say "no outside reference material in the log" (the model's prior knowledge can't be excluded).
 7. **Transcript**: "Transcript (attempt N, <agent>, <model>)", then that attempt's `transcript.md` unchanged. Every attempt, in order. Say above the first one that long outputs are clipped, and that the complete redacted logs are at `https://github.com/Simbastack-hq/canagentuseit/tree/main/results/<run id>` (they're added when the post goes live).
 8. Footer, italic: "_Written by an agent from the run log. Verdicts are about this agent, this version, on this date. Spot an error? [Request a correction](https://github.com/Simbastack-hq/canagentuseit/issues/new?template=correction.yml)._" (Don't claim human review; the publish step adds that line itself when it's true.)
 

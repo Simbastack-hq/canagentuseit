@@ -4,93 +4,268 @@
   "title": "Test card",
   "description": "Written by the scout. Only the fields under `brief` (plus tool name, version and docs_url) ever reach the test agent. Everything under `scout` stays outside the sandbox.",
   "type": "object",
-  "required": ["id", "created_at", "status", "tool", "version", "docs_url", "brief", "check", "eligibility", "scout"],
+  "required": [
+    "id",
+    "created_at",
+    "status",
+    "tool",
+    "version",
+    "docs_url",
+    "brief",
+    "check",
+    "eligibility",
+    "scout"
+  ],
   "additionalProperties": false,
   "properties": {
-    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,60}$", "description": "<tool-slug>-<version-slug>, e.g. fastmcp-2-14-1" },
-    "created_at": { "type": "string", "format": "date-time" },
-    "status": { "enum": ["queued", "needs_key", "testing", "done", "skipped"] },
-    "skip_reason": { "type": "string" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,60}$",
+      "description": "<tool-slug>-<version-slug>, e.g. fastmcp-2-14-1"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "needs_key",
+        "testing",
+        "done",
+        "skipped"
+      ]
+    },
+    "skip_reason": {
+      "type": "string"
+    },
     "tool": {
       "type": "object",
-      "required": ["name", "vendor", "kind", "homepage"],
+      "required": [
+        "name",
+        "vendor",
+        "kind",
+        "homepage"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string" },
-        "vendor": { "type": "string" },
-        "kind": { "enum": ["sdk", "model-api", "mcp-server", "cli", "agent-framework", "sandbox", "browser", "eval", "other"] },
-        "homepage": { "type": "string", "format": "uri" }
+        "name": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "sdk",
+            "model-api",
+            "mcp-server",
+            "cli",
+            "agent-framework",
+            "sandbox",
+            "browser",
+            "eval",
+            "other"
+          ]
+        },
+        "homepage": {
+          "type": "string",
+          "format": "uri"
+        }
       }
     },
     "version": {
       "type": "object",
-      "required": ["pinned", "source", "package"],
+      "required": [
+        "pinned",
+        "source",
+        "package"
+      ],
       "additionalProperties": false,
       "properties": {
-        "pinned": { "type": "string", "description": "Exact version, model id or release tag. Never 'latest'." },
-        "source": { "enum": ["npm", "pypi", "github-release", "model-id", "binary", "other"] },
-        "package": { "type": "string", "description": "Package / repo / model id the version belongs to" },
-        "released_at": { "type": "string" }
+        "pinned": {
+          "type": "string",
+          "description": "Exact version, model id or release tag. Never 'latest'."
+        },
+        "source": {
+          "enum": [
+            "npm",
+            "pypi",
+            "github-release",
+            "model-id",
+            "binary",
+            "other"
+          ]
+        },
+        "package": {
+          "type": "string",
+          "description": "Package / repo / model id the version belongs to"
+        },
+        "released_at": {
+          "type": "string"
+        }
       }
     },
-    "docs_url": { "type": "string", "format": "uri", "description": "The quickstart page. The test agent starts here." },
+    "docs_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "The quickstart page. The test agent starts here."
+    },
     "brief": {
       "type": "object",
-      "required": ["task"],
+      "required": [
+        "task"
+      ],
       "additionalProperties": false,
       "properties": {
-        "task": { "type": "string", "minLength": 40, "maxLength": 1200, "description": "The quickstart's own first task, in a builder's words. No hints, no workarounds, no non-docs links. Must name the pinned version." },
-        "env": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }, "description": "Names of vendor keys from keys.json to pass in (empty for no-signup tools)" }
+        "task": {
+          "type": "string",
+          "minLength": 40,
+          "maxLength": 1200,
+          "description": "The quickstart's own first task, in a builder's words. No hints, no workarounds, no non-docs links. Must name the pinned version."
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "description": "Names of vendor keys from keys.json to pass in (empty for no-signup tools)"
+        }
       }
     },
     "check": {
       "type": "object",
-      "required": ["command", "expect_exit", "stdout_regex", "version_probe", "must_reference"],
+      "required": [
+        "command",
+        "expect_exit",
+        "stdout_regex",
+        "version_probe",
+        "must_reference"
+      ],
       "additionalProperties": false,
       "properties": {
-        "command": { "type": "string", "description": "Run by the harness in the container after the agent stops, cwd /work, 180s timeout. Usually `bash /work/run.sh`." },
-        "expect_exit": { "type": "integer" },
-        "stdout_regex": { "type": "string", "description": "Python regex that must match stdout+stderr of the command" },
-        "version_probe": { "type": "string", "description": "Command that prints the installed tool version, e.g. `cd /work && uv run python -c 'import fastmcp; print(fastmcp.__version__)'`" },
-        "must_reference": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Strings at least one of which must appear in files under /work (import names, CLI names)" }
+        "command": {
+          "type": "string",
+          "description": "Run by the harness in the container after the agent stops, cwd /work, 180s timeout. Usually `bash /work/run.sh`."
+        },
+        "expect_exit": {
+          "type": "integer"
+        },
+        "stdout_regex": {
+          "type": "string",
+          "description": "Python regex that must match stdout+stderr of the command"
+        },
+        "version_probe": {
+          "type": "string",
+          "description": "Command that prints the installed tool version, e.g. `cd /work && uv run python -c 'import fastmcp; print(fastmcp.__version__)'`"
+        },
+        "must_reference": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Strings at least one of which must appear in files under /work (import names, CLI names)"
+        },
+        "decoy_script": {
+          "type": "string",
+          "description": "A deliberately wrong /work/run.sh (prints plausible but wrong output, e.g. the right shape with wrong values, or the expected words without calling the tool). The check must FAIL on it. Required for new cards."
+        }
       }
     },
     "eligibility": {
       "type": "object",
-      "required": ["public_docs", "needs_signup", "agent_builder_relevant", "runnable_in_sandbox", "notable_because"],
+      "required": [
+        "public_docs",
+        "needs_signup",
+        "agent_builder_relevant",
+        "runnable_in_sandbox",
+        "notable_because"
+      ],
       "additionalProperties": false,
       "properties": {
-        "public_docs": { "type": "boolean" },
-        "needs_signup": { "type": "boolean" },
-        "needs_key": { "type": ["string", "null"], "description": "Env var name of a vendor key the quickstart needs, or null" },
-        "agent_builder_relevant": { "type": "boolean" },
-        "runnable_in_sandbox": { "type": "boolean" },
-        "notable_because": { "type": "string", "description": "Which WATCHLIST rule 6 bar it clears, with the number" }
+        "public_docs": {
+          "type": "boolean"
+        },
+        "needs_signup": {
+          "type": "boolean"
+        },
+        "needs_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Env var name of a vendor key the quickstart needs, or null"
+        },
+        "agent_builder_relevant": {
+          "type": "boolean"
+        },
+        "runnable_in_sandbox": {
+          "type": "boolean"
+        },
+        "notable_because": {
+          "type": "string",
+          "description": "Which WATCHLIST rule 6 bar it clears, with the number"
+        }
       }
     },
     "scout": {
       "type": "object",
-      "required": ["why_notable", "launch_claims", "sources", "found_via"],
+      "required": [
+        "why_notable",
+        "launch_claims",
+        "sources",
+        "found_via"
+      ],
       "additionalProperties": false,
       "properties": {
-        "why_notable": { "type": "string" },
+        "why_notable": {
+          "type": "string"
+        },
         "launch_claims": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["claim", "source_url", "testable_how", "revisit_after"],
+            "required": [
+              "claim",
+              "source_url",
+              "testable_how",
+              "revisit_after"
+            ],
             "additionalProperties": false,
             "properties": {
-              "claim": { "type": "string", "description": "Quoted or closely paraphrased, one claim" },
-              "source_url": { "type": "string", "format": "uri" },
-              "testable_how": { "type": "string" },
-              "revisit_after": { "type": "string", "format": "date" }
+              "claim": {
+                "type": "string",
+                "description": "Quoted or closely paraphrased, one claim"
+              },
+              "source_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "testable_how": {
+                "type": "string"
+              },
+              "revisit_after": {
+                "type": "string",
+                "format": "date"
+              }
             }
           }
         },
-        "sources": { "type": "array", "items": { "type": "string", "format": "uri" } },
-        "found_via": { "type": "string" },
-        "notes": { "type": "string" }
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "found_via": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
       }
     }
   }

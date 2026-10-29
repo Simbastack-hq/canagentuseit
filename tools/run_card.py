@@ -194,7 +194,8 @@ def attempt(n, agent, brief, run_dir):
             (d / "agent.exit").write_text("124")
         chk = brief["check"]
         # Leftover background processes must not make an incomplete run.sh pass.
-        box("exec", cid, "20", "kill -9 -1 2>/dev/null; true")
+        _, kout, _ = box("exec", cid, "20", "echo before: $(ps -u dev -o pid= | wc -l) processes; kill -9 -1 2>/dev/null; sleep 1; echo after: $(ps -u dev -o pid= | wc -l) processes")
+        (d / "cleanup.out").write_text(kout)
         crc, cout, _ = box("exec", cid, "180", chk["command"])
         (d / "check.out").write_text(cout)
         _, vout, _ = box("exec", cid, "120", chk["version_probe"])
@@ -244,10 +245,19 @@ def main():
     # Decoy: the check must FAIL on an untouched box, or it can't tell success from an error message.
     cid = re.sub(r"[^a-z0-9-]", "-", f"{run_dir.name.lower()}-decoy")[-90:].strip("-")
     box("start", cid)
-    drc, dout, _ = box("exec", cid, "180", brief["check"]["command"])
+    chk = brief["check"]
+    passes = lambda rc, out: rc == chk["expect_exit"] and re.search(chk["stdout_regex"], out, re.M) is not None
+    drc, dout, _ = box("exec", cid, "180", chk["command"])
+    decoys = [{"kind": "untouched box", "exit": drc, "passed": passes(drc, dout), "output_tail": dout[-1500:]}]
+    if chk.get("decoy_script"):
+        # A plausible but wrong run.sh: the check has to tell it apart from the real thing.
+        box("put", cid, "/work/run.sh", stdin=chk["decoy_script"].encode())
+        drc, dout, _ = box("exec", cid, "180", chk["command"])
+        decoys.append({"kind": "wrong run.sh", "exit": drc, "passed": passes(drc, dout), "output_tail": dout[-1500:]})
     box("rm", cid)
-    decoy_passed = drc == brief["check"]["expect_exit"] and re.search(brief["check"]["stdout_regex"], dout, re.M)
-    (run_dir / "decoy.json").write_text(json.dumps({"exit": drc, "passed": bool(decoy_passed), "output_tail": dout[-1500:]}, indent=2))
+    decoy_passed = any(x["passed"] for x in decoys)
+    (run_dir / "decoy.json").write_text(json.dumps({"passed": decoy_passed, "decoys": decoys,
+                                                     "exit": decoys[0]["exit"], "output_tail": decoys[0]["output_tail"]}, indent=2))
     if decoy_passed:
         subprocess.run([sys.executable, HERE / "verdict.py", "result", run_dir / "brief.json", run_dir])
         return
