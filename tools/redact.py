@@ -81,6 +81,7 @@ def hits(text):
 
 TEXT = {".json", ".jsonl", ".md", ".txt", ".out", ".log", ".csv", ".srt", ".cast", ".stderr", ".sh", ".py", ".js", ".ts", ".toml", ".yaml", ".yml"}
 COPY_BINARY = {".webm", ".mp4", ".png"}
+WORK_TEXT = {"", ".cfg", ".ini", ".env.example", ".html", ".css", ".mjs", ".cjs", ".tsx", ".jsx", ".rs", ".go", ".rb", ".lock", ".gitignore"}
 SKIP = {"work.tgz", "mcp.json", "raw.stderr"}   # the work tarball is unreviewable as a blob; mcp.json holds host paths
 
 
@@ -96,7 +97,7 @@ def make_public(run):
         rel = p.relative_to(run)
         dest = pub / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
-        if p.suffix in TEXT:
+        if p.suffix in TEXT or ("work-files" in rel.parts and p.suffix in WORK_TEXT):
             dest.write_text(redact(p.read_text(errors="replace")))
             n += 1
         elif p.suffix in COPY_BINARY:

@@ -91,6 +91,29 @@ def mcp_env(cid, d):
     return {"CAUI_RUN": cid, "CAUI_BOX": shlex.join(BOX), "CAUI_LOG": str(d / "box-log.jsonl")}
 
 
+def unpack_text(tgz, dest, max_file=200_000, max_total=2_000_000):
+    """The agent's final files, as plain text, so the writer can quote them whole (the transcript clips)."""
+    import tarfile
+    total = 0
+    try:
+        with tarfile.open(tgz) as t:
+            for m in t.getmembers():
+                if not m.isfile() or m.size > max_file or total + m.size > max_total:
+                    continue
+                name = Path(m.name).as_posix().lstrip("./")
+                if not name or ".." in Path(name).parts:
+                    continue
+                data = t.extractfile(m).read()
+                if b"\0" in data[:4096]:
+                    continue
+                out = dest / name
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_bytes(data)
+                total += m.size
+    except (tarfile.TarError, OSError, EOFError):
+        pass
+
+
 def generic_probe(v):
     pkg = v["package"]
     if v["source"] == "pypi":
@@ -183,6 +206,7 @@ def attempt(n, agent, brief, run_dir):
         (d / "references.out").write_text(rout)
         _, tgz, _ = box("tarwork", cid, binary=True)
         (d / "work.tgz").write_bytes(tgz)
+        unpack_text(d / "work.tgz", d / "work-files")
     finally:
         box("rm", cid)
         shutil.rmtree(scratch, ignore_errors=True)

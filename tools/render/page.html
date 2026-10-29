@@ -1,0 +1,79 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Renders one keyframe of a run (window.show(state)). Designed at 1920x1080 (16:9) and 1080x1920 (9:16);
+     shoot.js screenshots it at deviceScaleFactor 2 for 4K. Local fonts only, so renders are deterministic. -->
+<style>
+  :root { --bg:#0e1116; --panel:#151a22; --ink:#e6edf3; --dim:#8b96a3; --cmd:#7ee0c3; --err:#ff8a7a; --ok:#9be37c;
+          --file:#c9b8ff; --accent:#ffd166; --mono: "JetBrains Mono","SF Mono","DejaVu Sans Mono",Menlo,monospace;
+          --sans: "Inter","SF Pro Display","DejaVu Sans","Helvetica Neue",Arial,sans-serif; }
+  * { box-sizing:border-box; margin:0; padding:0 }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--ink); font-family:var(--sans); overflow:hidden }
+  #app { position:absolute; inset:0; display:grid; gap:20px; padding:36px 44px }
+  .wide #app { grid-template-rows: auto auto 1fr auto; }
+  .tall #app { grid-template-rows: auto auto 1fr auto; padding:56px 40px }
+  header { display:flex; justify-content:space-between; align-items:baseline; gap:24px }
+  header .t { font-weight:800; font-size:34px; letter-spacing:-.01em }
+  header .t b { color:var(--accent) }
+  header .m { color:var(--dim); font-size:22px; white-space:nowrap }
+  .tall header { flex-direction:column; gap:6px } .tall header .t { font-size:44px } .tall header .m { font-size:28px }
+  #term { background:var(--panel); border-radius:18px; padding:26px 30px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end;
+          font-family:var(--mono); font-size:21px; line-height:1.42; box-shadow:0 0 0 1px #232a35 inset }
+  .tall #term { font-size:22px }
+  #term div { white-space:pre-wrap; word-break:break-all }
+  .cmd { color:var(--cmd); font-weight:700 } .cmd2 { color:var(--cmd) } .out { color:#c9d1d9 } .err { color:var(--err) }
+  .ok { color:var(--ok); font-weight:700 } .meta { color:var(--dim) } .file { color:var(--file) }
+  #caption { min-height:96px; font-size:28px; line-height:1.35; color:#f4f6f8; background:#1b2230; border-left:6px solid var(--accent);
+             padding:16px 22px; border-radius:12px }
+  .tall #caption { font-size:34px; min-height:150px }
+  #caption:empty::before { content:'…'; color:#4b5563 }
+  footer { display:flex; justify-content:space-between; color:var(--dim); font-size:22px; font-family:var(--mono) }
+  .tall footer { font-size:26px; flex-direction:column; gap:6px }
+  footer b { color:var(--ink) }
+  #overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:var(--bg) }
+  #overlay.on { display:flex }
+  #overlay .box { max-width:80%; text-align:center } .tall #overlay .box { max-width:88% }
+  #overlay h1 { font-size:76px; font-weight:850; letter-spacing:-.02em; line-height:1.08 } .tall #overlay h1 { font-size:84px }
+  #overlay p { margin-top:26px; font-size:30px; color:#cfd6de; line-height:1.4 }
+  #overlay .small { font-size:24px; color:var(--dim); margin-top:18px }
+  #overlay .site { position:absolute; bottom:40px; left:0; right:0; text-align:center; font-weight:800; font-size:26px; color:#6b7684 }
+  #overlay.skip { background:rgba(9,11,15,.55) } #overlay.skip h1 { font-size:54px; color:var(--accent) }
+  .verdict { display:inline-block; font-size:110px; font-weight:900; padding:6px 36px; border-radius:22px; margin-bottom:22px }
+  .v-works { background:#1f6f43 } .v-partly { background:#8a6a12 } .v-couldnt { background:#8f2d22 } .v-inconclusive { background:#3b4656 }
+  .facts { margin-top:22px; font-family:var(--mono); font-size:26px; color:#dfe5ec; line-height:1.6 }
+  .brand { position:absolute; right:44px; bottom:22px; font-weight:800; font-size:20px; color:#5d6876; letter-spacing:.02em }
+</style></head>
+<body>
+<div id="app">
+  <header><div class="t" id="title"></div><div class="m" id="meta"></div></header>
+  <div id="caption"></div>
+  <div id="term"></div>
+  <footer><span id="who"></span><span id="clock"></span></footer>
+</div>
+<div id="overlay"><div class="box" id="obox"></div></div>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+document.body.className = innerWidth >= innerHeight ? 'wide' : 'tall';
+if (document.body.className === 'tall') { const a = document.getElementById('app'); a.insertBefore(document.getElementById('caption'), document.getElementById('term')); }
+window.show = (s) => {
+  const h = s.head || {};
+  document.getElementById('title').innerHTML = `Can an agent use <b>${esc(h.tool)} ${esc(h.version)}</b>?`;
+  document.getElementById('meta').textContent = `tested ${h.date} · canagentuseit.com`;
+  document.getElementById('caption').textContent = s.caption || '';
+  document.getElementById('term').innerHTML = (s.lines || []).map(l => `<div class="${l.k}">${esc(l.s)}</div>`).join('');
+  const c = s.counter || {};
+  document.getElementById('who').textContent = c.label || '';
+  document.getElementById('clock').innerHTML = c.elapsed ? `${c.skip ? `<span style="color:var(--accent)">${esc(c.skip)}</span> · ` : ''}<b>${c.elapsed}</b> elapsed · ${c.calls} tool calls · replay` : '';
+  document.getElementById('caption').style.display = (s.clean ? 'none' : '');
+  const o = document.getElementById('overlay'), b = document.getElementById('obox'), ov = s.overlay;
+  o.className = ov ? 'on ' + ov.kind : '';
+  if (!ov) { b.innerHTML = ''; return; }
+  if (ov.kind === 'verdict') {
+    const label = {works:'Works', partly:'Partly', couldnt:"Couldn't", inconclusive:'Inconclusive'}[ov.verdict] || ov.verdict;
+    b.innerHTML = `<div class="verdict v-${ov.verdict}">${label}</div><h1>${esc(ov.tool)} ${esc(ov.version)}</h1>
+      <p>${esc(ov.reason)}</p>
+      <div class="site">canagentuseit.com</div><div class="facts">${ov.minutes != null ? `${ov.minutes} min to success` : `${ov.wall} min of trying`}${ov.usd != null ? ` · API-equivalent $${ov.usd}` : ''}<br>${ov.agents.map(esc).join('<br>')}<br>tested ${esc(ov.date)}</div>`;
+  } else {
+    b.innerHTML = `<h1>${esc(ov.title)}</h1>${ov.sub ? `<p>${esc(ov.sub)}</p>` : ''}${ov.date ? `<div class="small">tested ${esc(ov.date)} · docs only · fresh sandbox</div>` : ''}`;
+  }
+};
+</script></body></html>
