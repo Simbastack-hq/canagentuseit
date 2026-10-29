@@ -126,7 +126,7 @@ SKIP = {"work.tgz", "mcp.json", "raw.stderr"}   # the work tarball is unreviewab
 def make_public(run):
     run = Path(run)
     pub = run / "public"
-    keep = {n: (pub / n).read_text() for n in ("post.md", "guide.md") if (pub / n).exists()}
+    keep = {n: redact((pub / n).read_text()) for n in ("post.md", "guide.md") if (pub / n).exists()}
     if pub.exists():
         shutil.rmtree(pub)
     n = 0
