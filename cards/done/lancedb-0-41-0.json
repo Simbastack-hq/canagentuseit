@@ -1,7 +1,7 @@
 {
   "id": "lancedb-0-41-0",
   "created_at": "2026-10-29T21:00:00Z",
-  "status": "queued",
+  "status": "done",
   "tool": {
     "name": "LanceDB",
     "vendor": "LanceDB",
@@ -23,7 +23,9 @@
     "expect_exit": 0,
     "stdout_regex": "(?s)shape: \\(2, 4\\).*_distance",
     "version_probe": "cd /work && (uv run python -c 'import lancedb;print(lancedb.__version__)' || .venv/bin/python -c 'import lancedb;print(lancedb.__version__)' || python3 -c 'import lancedb;print(lancedb.__version__)')",
-    "must_reference": ["lancedb"]
+    "must_reference": [
+      "lancedb"
+    ]
   },
   "eligibility": {
     "public_docs": true,
