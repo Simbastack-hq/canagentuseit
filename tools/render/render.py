@@ -43,9 +43,11 @@ def js_runtime():
 
 def main(run, only=None):
     run = Path(run).resolve()
+    # Video is published material: build it from the redacted copy, never the raw run.
+    src = run / "public" if (run / "public" / "result.json").exists() else run
     media = run / "media"
     media.mkdir(exist_ok=True)
-    subprocess.run([sys.executable, HERE / "timeline.py", run, media], check=True)
+    subprocess.run([sys.executable, HERE / "timeline.py", src, media], check=True)
     ff, js = ffmpeg(), js_runtime()
     for aspect, name in (("wide", "16x9"), ("tall", "9x16")):
         if only and only != aspect:
@@ -58,7 +60,7 @@ def main(run, only=None):
             subprocess.run([ff, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", Path(tmp) / "concat.txt",
                             "-vf", "fps=30,format=yuv420p", "-c:v", "libx264", "-profile:v", "high", "-preset", "slow",
                             "-crf", "16", "-movflags", "+faststart", media / f"terminal-{name}.mp4"], check=True)
-    broll = next(iter(sorted(run.glob("video/*.webm"))), None)
+    broll = next(iter(sorted(src.glob("video/*.webm"))), None)
     if broll and not only:
         subprocess.run([ff, "-y", "-loglevel", "error", "-i", broll, "-vf", "fps=30,format=yuv420p", "-c:v", "libx264",
                         "-profile:v", "high", "-crf", "16", "-an", "-movflags", "+faststart", media / "docs-broll.mp4"], check=True)
