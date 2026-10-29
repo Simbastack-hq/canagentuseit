@@ -15,6 +15,7 @@ public/ into the repo. What gets stripped:
 Extra patterns can be added per machine in $CAUI_REDACT_EXTRA (one regex per line), e.g. the lab's
 public IP; that file lives outside the repo.
 """
+import json
 import os
 import re
 import shutil
@@ -74,6 +75,16 @@ def redact(text):
     return text
 
 
+def redact_obj(o):
+    if isinstance(o, str):
+        return redact(o)
+    if isinstance(o, list):
+        return [redact_obj(x) for x in o]
+    if isinstance(o, dict):
+        return {redact(k) if isinstance(k, str) else k: redact_obj(v) for k, v in o.items()}
+    return o
+
+
 def hits(text):
     return [(rep, m.group(0)[:12] + "…") for rx, rep in R for m in rx.finditer(text)
             if not m.group(0).startswith(("[REDACTED", "/home/[user]", "[host]", "[scratch]"))]
@@ -88,6 +99,7 @@ SKIP = {"work.tgz", "mcp.json", "raw.stderr"}   # the work tarball is unreviewab
 def make_public(run):
     run = Path(run)
     pub = run / "public"
+    keep = {n: (pub / n).read_text() for n in ("post.md", "guide.md") if (pub / n).exists()}
     if pub.exists():
         shutil.rmtree(pub)
     n = 0
@@ -97,11 +109,25 @@ def make_public(run):
         rel = p.relative_to(run)
         dest = pub / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
-        if p.suffix in TEXT or ("work-files" in rel.parts and p.suffix in WORK_TEXT):
+        if p.suffix in (".json", ".jsonl") and "work-files" not in rel.parts:
+            # Redact inside string values, never across JSON escapes (a pattern can eat the n of a \n).
+            text = p.read_text(errors="replace")
+            try:
+                if p.suffix == ".json":
+                    out = json.dumps(redact_obj(json.loads(text)), indent=2, ensure_ascii=False) + "\n"
+                else:
+                    out = "".join(json.dumps(redact_obj(json.loads(l)), ensure_ascii=False) + "\n" for l in text.splitlines() if l.strip())
+            except json.JSONDecodeError:
+                out = redact(text)
+            dest.write_text(out)
+            n += 1
+        elif p.suffix in TEXT or ("work-files" in rel.parts and p.suffix in WORK_TEXT):
             dest.write_text(redact(p.read_text(errors="replace")))
             n += 1
         elif p.suffix in COPY_BINARY:
             shutil.copy2(p, dest)
+    for n, t in keep.items():
+        (pub / n).write_text(t)
     left = [(str(f), h) for f in pub.rglob("*") if f.is_file() and f.suffix in TEXT for h in hits(f.read_text(errors="replace"))]
     if left:
         sys.exit(f"redaction left matches, refusing: {left[:5]}")

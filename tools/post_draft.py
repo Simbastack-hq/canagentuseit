@@ -3,6 +3,7 @@
 
   post_draft.py <run-dir>              create the drafts, or update the same drafts on a re-run
   post_draft.py <run-dir> --publish    publish the post and its guide (only with CAUI_ALLOW_PUBLISH=1; NJ's call)
+  post_draft.py --pending              list runs that have a redacted result and no drafts yet (oldest first)
 
 Reads <run-dir>/public/post.md and public/guide.md (redacted copies only), records what it did in
 <run-dir>/post.json. Key from $CAUI_SLOPIT_KEY_FILE (default ~/.config/caui/slopit-key), blog id from
@@ -124,10 +125,19 @@ def save(kind, src, prev, key, blog, publish):
     }
 
 
+RUNS = Path(os.environ.get("CAUI_RUNS", Path.home() / "caui-runs"))
+
+
 def main():
     args = sys.argv[1:]
     if not args:
         sys.exit(__doc__)
+    if args == ["--pending"]:
+        for r in sorted(RUNS.glob("*/public/result.json")):
+            run = r.parent.parent
+            if not (run / "post.json").exists():
+                print(run)
+        return
     run = Path(args[0]).expanduser()
     publish = "--publish" in args
     if publish and os.environ.get("CAUI_ALLOW_PUBLISH") != "1":
