@@ -153,8 +153,9 @@ def main():
         if kind == "guide":
             ok, chk = guide_ok(run)
             if not ok:
+                why = chk.get("error") or "check failed"
                 rec["guide"] = {"kind": "guide", "status": "withheld",
-                                "reason": f"its own steps didn't work in a fresh container: {chk.get('error') or 'check failed'}"}
+                                "reason": why if why.startswith("sandbox unavailable") else f"its own steps didn't work in a fresh container: {why}"}
                 continue
         rec[kind] = save(kind, src, rec.get(kind) or {}, key, blog, publish)
     if not rec:

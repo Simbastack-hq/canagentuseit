@@ -56,6 +56,8 @@ def main(run):
         cid = re.sub(r"[^a-z0-9-]", "-", f"{run.name.lower()}-guide")[-90:].strip("-")
         rc, image, err = box("start", cid)
         rec["image"] = image.strip()
+        if rc != 0:
+            rec["error"] = f"sandbox unavailable, guide not checked yet ({err.strip()[:200]})"
         try:
             ok = rc == 0
             for s in st:
@@ -74,7 +76,7 @@ def main(run):
                 passed = rc == brief["check"]["expect_exit"] and re.search(brief["check"]["stdout_regex"], out, re.M) is not None
                 rec["check"] = {"exit": rc, "passed": passed, "output_tail": out[-1500:]}
                 rec["passed"] = passed
-            else:
+            elif rc == 0 or rec["steps"]:
                 rec["error"] = f"step {len(rec['steps'])} failed"
         finally:
             box("rm", cid)

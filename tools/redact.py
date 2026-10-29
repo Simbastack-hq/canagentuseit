@@ -47,6 +47,9 @@ RULES = [
     (r"/(?:home|Users)/(?!dev\b)[A-Za-z0-9._\-]+", "/home/[user]"),
     (r"/root\b", "/home/[user]"),
     (r"/(?:private/)?(?:tmp|var/folders)/[A-Za-z0-9._/\-]*caui-scratch-[A-Za-z0-9_]+", "[scratch]"),
+    # the same paths as Claude Code's project keys (slashes turned into dashes), and any home-dir key
+    (r"-?(?:private-)?(?:tmp|var-folders)-[A-Za-z0-9_\-]*?caui-scratch-[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*", "[scratch]"),
+    (r"-(?:Users|home)-(?!dev\b)[A-Za-z0-9._]+-[A-Za-z0-9._\-]*", "[user-path]"),
     (r"\b[A-Za-z0-9\-]+\.(?:tail[a-z0-9]+\.)?ts\.net\b", "[host]"),
     (r"\bhel-lab\b|\bdev-server(?:-nj)?\b", "[host]"),
     (r"\b100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}\b", "[tailnet-ip]"),
