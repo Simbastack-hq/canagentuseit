@@ -4,6 +4,7 @@
 #   tools/run_job_all.sh <job-id> [out-dir]
 set -uo pipefail
 cd "$(dirname "$0")/.."
+export PATH="$HOME/.local/bin:$PATH"
 JOB="jobs/$1"; OUT="${2:-$HOME/caui-runs/jobs/$(date -u +%Y-%m-%d)-$1}"
 mkdir -p "$OUT"; chmod 700 "$OUT"
 products=$(python3 -c 'import json,sys;print(" ".join(p["key"] for p in json.load(open(sys.argv[1]))["products"]))' "$JOB/job.json")

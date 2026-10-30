@@ -43,9 +43,12 @@ TOOLS = ["mcp__sandbox__run", "mcp__sandbox__write_file", "mcp__sandbox__read_fi
 CODEX_OFF = ["shell_tool", "unified_exec", "unified_exec_tty", "view_image", "apps", "plugins", "multi_agent",
              "browser_use", "browser_use_external", "browser_use_full_cdp_access", "computer_use", "image_generation",
              "skill_search", "skill_mcp_dependency_install", "goals", "hooks", "tool_suggest", "sleep_tool",
-             "write_stdin_approval", "worktrees", "in_app_browser", "standalone_web_search", "web_search_request",
-             # code mode routes tool calls through a separate host binary we don't ship; MCP tools then vanish
-             "code_mode", "code_mode_host", "code_mode_interrupt", "code_mode_only"]
+             "write_stdin_approval", "worktrees", "in_app_browser", "standalone_web_search", "web_search_request"]
+# Codex 0.165 reaches MCP tools only through code mode, which needs `codex-code-mode-host` beside the
+# codex binary (a lone codex binary reports "code-mode host is disabled" and the sandbox tools vanish).
+# The lab installs both from the official release into ~/.local/bin.
+CODEX = os.environ.get("CAUI_CODEX") or next(
+    (str(p) for p in [Path.home() / ".local/bin/codex"] if p.exists() and (p.parent / "codex-code-mode-host").exists()), "codex")
 
 
 # Kill every process the agent left in the box, except PID 1 (tini), the box's own `sleep` under it
@@ -89,7 +92,7 @@ def box(*args, stdin=None, timeout=1000, binary=False):
 
 def codex_version():
     try:
-        return subprocess.run(["codex", "--version"], capture_output=True, text=True, timeout=30).stdout.split()[-1]
+        return subprocess.run([CODEX, "--version"], capture_output=True, text=True, timeout=30).stdout.split()[-1]
     except Exception:
         return "?"
 
@@ -183,9 +186,9 @@ def run_claude(task, cid, d, scratch):
 def run_codex(task, cid, d, scratch):
     env = mcp_env(cid, d)
     envtoml = "{" + ",".join(f'{k}="{v}"' for k, v in env.items()) + "}"
-    have = subprocess.run(["codex", "features", "list"], capture_output=True, text=True).stdout.split()
+    have = subprocess.run([CODEX, "features", "list"], capture_output=True, text=True).stdout.split()
     off = [x for f in CODEX_OFF if f in have for x in ("--disable", f)]
-    cmd = ["codex", "exec", "--json", "-m", CODEX_MODEL, "-s", "read-only", "--skip-git-repo-check", "-C", str(scratch),
+    cmd = [CODEX, "exec", "--json", "-m", CODEX_MODEL, "-s", "read-only", "--skip-git-repo-check", "-C", str(scratch),
            *off, "-c", 'web_search="disabled"',
            "-c", f'mcp_servers.sandbox.command="{sys.executable}"',
            "-c", f'mcp_servers.sandbox.args=["{HERE / "sandbox_mcp.py"}"]',
