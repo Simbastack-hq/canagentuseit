@@ -11,7 +11,7 @@ A test is **one documented first task, one pinned version, one agent setup, one 
 3. **The check must be able to fail.** Before any agent starts, the harness runs the check on an untouched box (the *decoy*). If the decoy passes, the check can't tell success from an error message: the run is `inconclusive` and the card goes back for a better check. Checks should exercise behaviour (call the thing with an input, read its answer), not just look for a word.
 4. **Everything is pinned and recorded.** Tool version, sandbox image tag, agent and model for each attempt, date. A verdict is about that combination only. There is no universal "works with agents" badge.
 5. **Docs only.** The agent gets the task text and the docs URL. Nothing from the scout's research reaches it (why the tool is notable, launch claims, forum threads). It may fetch any page (a real agent would), but has no web search. Every URL it fetched is in the result, and a pass where it never opened the docs is reported as prior knowledge.
-6. **Fresh, credential-free sandbox.** Each attempt starts a new container from the pinned image with an empty `/work`. The container holds no credentials of any kind, and can't reach the host or private networks.
+6. **Fresh sandbox, throwaway credentials only.** Each attempt starts a new container from the pinned image with an empty `/work`. The container holds no credentials except the throwaway ones a job declares for a product (free tier, no card on file, revoked after the test; see decision 0004), and can't reach the host or private networks.
 7. **The agent's brain runs outside.** The agent runs on the host with its own login, and its only way to act is four sandbox tools: `run` (a shell command in the container), `write_file`, `read_file`, `fetch_url` (fetched from inside the container). It has no host shell, no host files, no host web fetch, and none of the operator's settings, memory, skills or other tools. The harness checks the agent's tool inventory at start and voids the attempt if anything else is there. Posts say so: "Claude Code 2.1.x (sandbox tools only)".
 8. **Hard caps.** Per attempt: 20 minutes wall clock, 80 turns, 900 s per command, 1 MB of output per command. Per card: two agents, plus one re-run if our side failed. Per day: 3 cards (`MAX_TESTS_PER_DAY`).
 
@@ -63,3 +63,13 @@ Before the check runs, the harness kills every process the agent left running, s
 
 - Vendors and readers request corrections by opening an issue here (template: "Correction request"). NJ owns every correction and dispute. A correction re-runs the test on the stated version and adds a dated note to the post; the old result stays in `results/`.
 - Sponsors never touch selection, tests, verdicts or wording. A sponsor's tools aren't tested while they sponsor. No tested vendor is ever a sponsor.
+
+## Comparisons (decision 0004, from 2026-10-30)
+
+The main format. Where these rules differ from the single-tool rules above, these win for comparison jobs.
+
+- **One job, several products.** `jobs/<id>/` holds the spec the agent gets (`JOB.md`, the same for every product except name, version, docs URL and a one-line setup note), fixtures, a hidden check and decoys. The check and decoys are written before any run.
+- **Every product, every agent.** Each product is run once by Claude Code and once by Codex, with the same caps and image (`tools/run_job.py`, `tools/run_job_all.sh`). No early stop after a pass.
+- **Hidden check after the agent stops**, on data from one recorded seed per job, so every run faces the same workload. It must fail on an untouched box and on every decoy, or the run stops.
+- **No verdict per product and no automatic how-to.** `tools/compare.py` lines up the runs; one post per job leads with what differed and which product fits which need, then the step matrix, time, cost and the moments that decided it, and links the full logs. We read every solution before writing. NJ approves before anything is published.
+- **Claims stay inside the job.** A small fixed workload says nothing about production scale; one run per cell says nothing about reliability rates. Posts say so.
