@@ -1,0 +1,59 @@
+{
+  "id": "uv-0-13-6",
+  "created_at": "2026-10-30T09:00:00Z",
+  "status": "queued",
+  "tool": {
+    "name": "uv",
+    "vendor": "Astral",
+    "kind": "cli",
+    "homepage": "https://docs.astral.sh/uv/"
+  },
+  "version": {
+    "pinned": "0.13.6",
+    "source": "github-release",
+    "package": "astral-sh/uv",
+    "released_at": "2026-10-27"
+  },
+  "docs_url": "https://docs.astral.sh/uv/guides/projects/",
+  "brief": {
+    "task": "Install uv 0.13.6 and follow the uv projects guide: create a new project called hello-world with `uv init`, then run the project's hello-world entrypoint with `uv run` so that it prints its greeting.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh && find /work -maxdepth 3 -name pyvenv.cfg -path '*/.venv/*' -exec cat {} +",
+    "expect_exit": 0,
+    "stdout_regex": "(?s)Hello from hello-world!.*\\buv = \\d+\\.\\d+\\.\\d+",
+    "version_probe": "uv --version || \"$HOME/.local/bin/uv\" --version || \"$HOME/.cargo/bin/uv\" --version || /work/.venv/bin/uv --version",
+    "must_reference": [
+      "uv"
+    ],
+    "decoy_script": "#!/bin/bash\n# prints the greeting without creating a project or a uv-managed environment\necho 'Hello from hello-world!'\n"
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Backlog: uv is on the WATCHLIST backlog and not yet tested; the default Python package/project tool agents reach for"
+  },
+  "scout": {
+    "why_notable": "Backlog pick, and the one CLI in the slate. uv 0.13.6 shipped 2026-10-27 (19 wheels on PyPI); the installer pins by URL path, and the projects guide's layout (src/hello_world, `uv run hello-world`) differs from the older flat main.py template many agents remember.",
+    "launch_claims": [
+      {
+        "claim": "A specific version can be installed by including it in the installer URL: `curl -LsSf https://astral.sh/uv/0.13.6/install.sh | sh`.",
+        "source_url": "https://docs.astral.sh/uv/getting-started/installation/",
+        "testable_how": "Run the versioned installer in a fresh box and compare `uv --version` to the version in the URL.",
+        "revisit_after": "2026-11-26"
+      }
+    ],
+    "sources": [
+      "https://docs.astral.sh/uv/guides/projects/",
+      "https://docs.astral.sh/uv/getting-started/installation/",
+      "https://github.com/astral-sh/uv/releases/tag/0.13.6",
+      "https://pypi.org/pypi/uv/0.13.6/json"
+    ],
+    "found_via": "WATCHLIST backlog; version from GitHub latest release and PyPI",
+    "notes": "The getting-started 'first steps' page only runs `uv` for its help text (not a useful check), so the task is the projects guide's first example, whose shown output is `Hello from hello-world!`. The check also cats any .venv/pyvenv.cfg under /work so a bare echo can't pass: uv writes `uv = <version>` there when `uv run` creates the env. Release notes say 2026-10-26; GitHub and PyPI timestamps say 2026-10-27 UTC."
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "id": "mcp-typescript-sdk-2-4-0",
+  "created_at": "2026-10-30T09:00:00Z",
+  "status": "queued",
+  "tool": {
+    "name": "MCP TypeScript SDK (v2)",
+    "vendor": "Model Context Protocol",
+    "kind": "sdk",
+    "homepage": "https://github.com/modelcontextprotocol/typescript-sdk"
+  },
+  "version": {
+    "pinned": "2.4.0",
+    "source": "npm",
+    "package": "@modelcontextprotocol/server"
+  },
+  "docs_url": "https://github.com/modelcontextprotocol/typescript-sdk",
+  "brief": {
+    "task": "Using @modelcontextprotocol/server 2.4.0 and @modelcontextprotocol/client 2.4.0, build the greeting-server from the MCP TypeScript SDK README's Getting Started section, with its `greet` tool over stdio. Then write a client with the SDK that starts that server, calls `greet` with the name \"Ford\", and prints the tool's full result as JSON.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "\"type\"\\s*:\\s*\"text\"\\s*,\\s*\"text\"\\s*:\\s*\"Hello, Ford!\"|\"text\"\\s*:\\s*\"Hello, Ford!\"\\s*,\\s*\"type\"\\s*:\\s*\"text\"",
+    "version_probe": "cd /work && (npm ls @modelcontextprotocol/server @modelcontextprotocol/client || find /work -maxdepth 5 -path '*node_modules/@modelcontextprotocol/server/package.json' -exec grep -m1 '\"version\"' {} +)",
+    "must_reference": [
+      "@modelcontextprotocol/server",
+      "@modelcontextprotocol/client"
+    ],
+    "decoy_script": "#!/bin/bash\n# prints the greeting and a plausible JSON shape without starting the server or calling the tool\necho 'Hello, Ford!'\necho '{\"content\":[{\"type\":\"text\",\"text\":\"Hello, Ford\"}]}'\n"
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Backlog: the MCP TypeScript SDK is on the WATCHLIST backlog and not yet tested; v2 split it into @modelcontextprotocol/server and /client"
+  },
+  "scout": {
+    "why_notable": "Backlog pick (no new credential-free launch cleared the bar in the last 24h). The README's main branch is now v2 (`@modelcontextprotocol/server` / `client`, 2.4.0, Node ≥ 20), while v1 still ships as `@modelcontextprotocol/sdk` 1.32.2: agents trained on v1 imports are likely to mix the two.",
+    "launch_claims": [
+      {
+        "claim": "\"the SDK ships ES modules only\", so the package needs `type=module`; `tsx` runs TypeScript directly with no build step.",
+        "source_url": "https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/get-started/first-server.md",
+        "testable_how": "Run the first-server guide's steps verbatim at 2.4.x with and without `npm pkg set type=module`.",
+        "revisit_after": "2026-11-29"
+      }
+    ],
+    "sources": [
+      "https://github.com/modelcontextprotocol/typescript-sdk",
+      "https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/get-started/first-server.md",
+      "https://registry.npmjs.org/@modelcontextprotocol/server",
+      "https://registry.npmjs.org/@modelcontextprotocol/client"
+    ],
+    "found_via": "WATCHLIST backlog; versions from npm dist-tags (server and client both latest 2.4.0)",
+    "notes": "Non-Python, crosses a boundary (client process spawns the stdio server). The README's Getting Started has no client code; it links to docs/get-started/first-client.md, which the agent can follow. The separate first-server guide builds a weather server that calls api.weather.gov (live data, not checkable), so the README's greet example is used. The task asks for the full result as JSON so the check can require the CallToolResult shape (type text + text 'Hello, Ford!'), which a bare echo can't satisfy. 2.4.0 publish time (2026-10-23) came from a summary only, so released_at is left out."
+  }
+}
