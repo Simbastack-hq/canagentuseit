@@ -65,7 +65,7 @@ procs = [int(x.name) for x in Path("/proc").iterdir() if x.name.isdigit()]
 mine = [p for p in procs if Path(f"/proc/{p}").stat().st_uid == os.getuid()] if procs else []
 for p in procs:
     try:
-        if ppid(p) == 1 and Path(f"/proc/{p}/cmdline").read_bytes().split(b"\0")[0] in (b"sleep", b"/usr/bin/sleep"):
+        if ppid(p) == 1 and Path(f"/proc/{p}/cmdline").read_bytes() == b"sleep\x007200\x00":
             keep.add(p)
     except OSError:
         pass

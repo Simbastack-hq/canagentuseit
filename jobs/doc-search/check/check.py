@@ -89,7 +89,7 @@ def box_keepalive():
     for p in Path("/proc").iterdir():
         try:
             if p.name.isdigit() and next(l for l in open(p / "status") if l.startswith("PPid:")).split()[1] == "1" \
-                    and (p / "cmdline").read_bytes().split(b"\0")[0] in (b"sleep", b"/usr/bin/sleep"):
+                    and (p / "cmdline").read_bytes() == b"sleep\x007200\x00":
                 out.add(int(p.name))
         except (OSError, StopIteration):
             pass
