@@ -140,7 +140,10 @@ rows, ids, cats, stores = 0, set(), {}, []
 for pid in Path("/work/data").rglob("postmaster.pid"):
     lines = pid.read_text().splitlines()
     port, sock = lines[3].strip(), (lines[4].strip() or "localhost")
-    q = lambda db, sql: subprocess.run([B, "-h", sock, "-p", port, "-d", db, "-AtF", "\t", "-c", sql],
+    # Connect as whichever role the agent's cluster has: the OS user, or `postgres` (initdb -U postgres).
+    user = next((u for u in ("dev", "postgres") if subprocess.run([B, "-h", sock, "-p", port, "-U", u, "-d", "postgres", "-Atc", "select 1"],
+                                                                  capture_output=True, text=True, timeout=30).returncode == 0), "dev")
+    q = lambda db, sql: subprocess.run([B, "-h", sock, "-p", port, "-U", user, "-d", db, "-AtF", "\t", "-c", sql],
                                        capture_output=True, text=True, timeout=60).stdout.splitlines()
     for db in q("postgres", "select datname from pg_database where not datistemplate"):
         for t in q(db, "select format('%I.%I', table_schema, table_name) from information_schema.columns where udt_name='vector' group by 1"):

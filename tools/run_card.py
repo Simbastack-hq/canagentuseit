@@ -43,7 +43,9 @@ TOOLS = ["mcp__sandbox__run", "mcp__sandbox__write_file", "mcp__sandbox__read_fi
 CODEX_OFF = ["shell_tool", "unified_exec", "unified_exec_tty", "view_image", "apps", "plugins", "multi_agent",
              "browser_use", "browser_use_external", "browser_use_full_cdp_access", "computer_use", "image_generation",
              "skill_search", "skill_mcp_dependency_install", "goals", "hooks", "tool_suggest", "sleep_tool",
-             "write_stdin_approval", "worktrees", "in_app_browser", "standalone_web_search", "web_search_request"]
+             "write_stdin_approval", "worktrees", "in_app_browser", "standalone_web_search", "web_search_request",
+             # code mode routes tool calls through a separate host binary we don't ship; MCP tools then vanish
+             "code_mode", "code_mode_host", "code_mode_interrupt", "code_mode_only"]
 
 
 def box(*args, stdin=None, timeout=1000, binary=False):
