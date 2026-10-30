@@ -6,20 +6,63 @@
   "fixtures": "fixtures",
   "check": "check/check.py",
   "decoy": "decoy",
-  "caps": {"minutes": 30, "turns": 120},
-  "agents": ["claude", "codex"],
+  "caps": {
+    "minutes": 30,
+    "turns": 120
+  },
+  "agents": [
+    "claude",
+    "codex"
+  ],
   "products": [
-    {"key": "chroma", "product": "Chroma", "version": {"pinned": "1.5.9", "source": "pypi", "package": "chromadb"},
-     "docs_url": "https://docs.trychroma.com/docs/overview/getting-started",
-     "setup_note": "Install it from PyPI (`chromadb==1.5.9`).",
-     "must_reference": ["chromadb"]},
-    {"key": "lancedb", "product": "LanceDB", "version": {"pinned": "0.41.0", "source": "pypi", "package": "lancedb"},
-     "docs_url": "https://docs.lancedb.com/quickstart",
-     "setup_note": "Install it from PyPI (`lancedb==0.41.0`).",
-     "must_reference": ["lancedb"]},
-    {"key": "pgvector", "product": "pgvector", "version": {"pinned": "0.8.7", "source": "other", "package": "postgresql-17-pgvector"},
-     "docs_url": "https://github.com/pgvector/pgvector",
-     "setup_note": "PostgreSQL 17 with the pgvector extension is already installed on this machine (binaries in `/usr/lib/postgresql/17/bin`). No server is running, and you have no root.",
-     "must_reference": ["vector"]}
+    {
+      "key": "chroma",
+      "product": "Chroma",
+      "version": {
+        "pinned": "1.5.9",
+        "source": "pypi",
+        "package": "chromadb"
+      },
+      "docs_url": "https://docs.trychroma.com/docs/overview/getting-started",
+      "setup_note": "Install it from PyPI (`chromadb==1.5.9`).",
+      "must_reference": [
+        "chromadb"
+      ]
+    },
+    {
+      "key": "lancedb",
+      "product": "LanceDB",
+      "version": {
+        "pinned": "0.41.0",
+        "source": "pypi",
+        "package": "lancedb"
+      },
+      "docs_url": "https://docs.lancedb.com/quickstart",
+      "setup_note": "Install it from PyPI (`lancedb==0.41.0`).",
+      "must_reference": [
+        "lancedb"
+      ]
+    },
+    {
+      "key": "pgvector",
+      "product": "pgvector",
+      "version": {
+        "pinned": "0.8.7",
+        "source": "other",
+        "package": "postgresql-17-pgvector"
+      },
+      "docs_url": "https://github.com/pgvector/pgvector",
+      "setup_note": "PostgreSQL 17 with the pgvector extension is already installed on this machine (binaries in `/usr/lib/postgresql/17/bin`). No server is running, and you have no root.",
+      "must_reference": [
+        "vector"
+      ]
+    }
+  ],
+  "check_seed": 20261030,
+  "decoy_modes": [
+    "json",
+    "l2",
+    "dupupdate",
+    "nodelete"
   ]
 }

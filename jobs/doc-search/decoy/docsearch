@@ -1,23 +1,36 @@
 #!/usr/bin/env python3
-# Decoy for the hidden check: right behaviour, no product (a JSON file and brute-force cosine).
-# The check must fail it on "<product> holds the data".
+# Decoys for the hidden check. Every one of them must FAIL it. /work/.decoy_mode picks one:
+#   json       right behaviour from a JSON file and brute-force cosine, no product
+#   l2         ranks by Euclidean distance instead of cosine
+#   dupupdate  re-adding an id adds a second copy instead of replacing it
+#   nodelete   delete exits 0 but removes nothing
 import json, math, sys
 from pathlib import Path
+MODE = Path("/work/.decoy_mode").read_text().strip() if Path("/work/.decoy_mode").exists() else "json"
 F = Path("/work/data/store.json")
-s = json.loads(F.read_text()) if F.exists() else {}
+s = json.loads(F.read_text()) if F.exists() else []
 cmd, a = sys.argv[1], sys.argv[2:]
 if cmd == "add":
     for l in open(a[0]):
         if l.strip():
-            d = json.loads(l); s[d["id"]] = d
-elif cmd == "delete":
-    for i in a: s.pop(i, None)
+            d = json.loads(l)
+            if MODE != "dupupdate":
+                s = [x for x in s if x["id"] != d["id"]]
+            s.append(d)
+elif cmd == "delete" and MODE != "nodelete":
+    s = [x for x in s if x["id"] not in set(a)]
 elif cmd == "count":
     print(len(s))
 elif cmd == "query":
     q = json.load(open(a[0])); k = int(a[a.index("--k") + 1]) if "--k" in a else 5
     cat = a[a.index("--category") + 1] if "--category" in a else None
-    cos = lambda v: sum(x * y for x, y in zip(v, q)) / math.sqrt(sum(x * x for x in v) * sum(y * y for y in q))
-    for d in sorted((d for d in s.values() if cat in (None, d["category"])), key=lambda d: -cos(d["vector"]))[:k]:
-        print(d["id"])
+    if MODE == "l2":
+        key = lambda v: sum((x - y) ** 2 for x, y in zip(v, q))
+    else:
+        key = lambda v: -sum(x * y for x, y in zip(v, q)) / math.sqrt(sum(x * x for x in v) * sum(y * y for y in q))
+    seen = []
+    for d in sorted((d for d in s if cat in (None, d["category"])), key=lambda d: key(d["vector"])):
+        if d["id"] not in seen:
+            seen.append(d["id"])
+    print("\n".join(seen[:k]))
 F.parent.mkdir(parents=True, exist_ok=True); F.write_text(json.dumps(s))

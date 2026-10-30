@@ -46,23 +46,25 @@ def put_dir(cid, src, dest):
             rc.box("put", cid, f"{dest}/{f.relative_to(src).as_posix()}", stdin=f.read_bytes())
 
 
-def run_check(cid, job_dir, key):
+def run_check(cid, job_dir, p):
     rc.box("put", cid, "/tmp/check/check.py", stdin=(job_dir / JOB["check"]).read_bytes())
-    code, out, _ = rc.box("exec", cid, CHECK_TIMEOUT, f"python3 /tmp/check/check.py {key}", timeout=1000)
+    # Same seed for every run of the job: every product and agent faces the same hidden workload.
+    code, out, _ = rc.box("exec", cid, CHECK_TIMEOUT, f"python3 /tmp/check/check.py {p['key']} {JOB['check_seed']} "
+                          f"{shlex.quote(p['version']['pinned'])}", timeout=1000)
     res = next((json.loads(l[11:]) for l in reversed(out.splitlines()) if l.startswith("CHECK_JSON ")), None)
     return code, out, res or {"passed": False, "steps": [], "error": "check printed no result"}
 
 
-def decoys(job_dir, key, run_dir):
+def decoys(job_dir, p, run_dir):
     out = []
-    for kind in ("untouched box", "decoy (no product)"):
+    for kind in ["untouched box"] + [f"decoy: {m}" for m in JOB.get("decoy_modes", ["json"])]:
         cid = re.sub(r"[^a-z0-9-]", "-", f"{run_dir.name.lower()}-decoy{len(out)}")[-90:].strip("-")
         rc.box("start", cid)
         try:
             if kind.startswith("decoy"):
                 put_dir(cid, job_dir / JOB["decoy"], "/work")
-                rc.box("exec", cid, "30", "chmod +x /work/docsearch /work/start.sh /work/stop.sh")
-            code, text, res = run_check(cid, job_dir, key)
+                rc.box("exec", cid, "30", f"chmod +x /work/docsearch /work/start.sh /work/stop.sh && echo {kind[7:]} > /work/.decoy_mode")
+            code, text, res = run_check(cid, job_dir, p)
         finally:
             rc.box("rm", cid)
         out.append({"kind": kind, "exit": code, "passed": res["passed"],
@@ -93,7 +95,7 @@ def main():
     (run_dir / "brief.json").write_text(json.dumps(brief, indent=2))
     (run_dir / "task.txt").write_text(task + "\n\n--- /work/job/JOB.md ---\n" + spec)
 
-    dec = decoys(job_dir, key, run_dir)
+    dec = decoys(job_dir, p, run_dir)
     (run_dir / "decoy.json").write_text(json.dumps(dec, indent=2))
     if dec["passed"]:
         (run_dir / "run.json").write_text(json.dumps({"error": "a decoy passed the check; fix the check", **brief}, indent=2))
@@ -122,7 +124,7 @@ def main():
         wall = time.time() - t0
         _, kout, _ = rc.box("exec", cid, "20", "echo before: $(ps -u dev -o pid= | wc -l) processes; kill -9 -1 2>/dev/null; sleep 1; echo after: $(ps -u dev -o pid= | wc -l) processes")
         (d / "cleanup.out").write_text(kout)
-        ccode, cout, cres = run_check(cid, job_dir, key)
+        ccode, cout, cres = run_check(cid, job_dir, p)
         (d / "check.out").write_text(cout)
         (d / "check.json").write_text(json.dumps(cres, indent=2))
         (d / "version.out").write_text(probe_version(cid, p))
