@@ -17,7 +17,7 @@
      "docs_url": "https://docs.lancedb.com/quickstart",
      "setup_note": "Install it from PyPI (`lancedb==0.41.0`).",
      "must_reference": ["lancedb"]},
-    {"key": "pgvector", "product": "pgvector", "version": {"pinned": "@PGVECTOR@", "source": "other", "package": "postgresql-17-pgvector"},
+    {"key": "pgvector", "product": "pgvector", "version": {"pinned": "0.8.7", "source": "other", "package": "postgresql-17-pgvector"},
      "docs_url": "https://github.com/pgvector/pgvector",
      "setup_note": "PostgreSQL 17 with the pgvector extension is already installed on this machine (binaries in `/usr/lib/postgresql/17/bin`). No server is running, and you have no root.",
      "must_reference": ["vector"]}
