@@ -102,7 +102,10 @@ def strings(o):
 
 def checkable(path):
     """Text to scan for leftovers: JSON is scanned by value, so escapes like \n can't fake a match."""
-    text = Path(path).read_text(errors="replace")
+    try:
+        text = Path(path).read_text(errors="replace")
+    except UnicodeDecodeError:
+        return ""
     if Path(path).suffix in (".json", ".jsonl"):
         try:
             docs = [json.loads(text)] if Path(path).suffix == ".json" else [json.loads(l) for l in text.splitlines() if l.strip()]
@@ -113,7 +116,7 @@ def checkable(path):
 
 
 def hits(text):
-    return [(rep, m.group(0)[:12] + "…") for rx, rep in R for m in rx.finditer(text)
+    return [(rep, m.group(0)[:4] + "…") for rx, rep in R for m in rx.finditer(text)
             if not m.group(0).startswith(("[REDACTED", "/home/[user]", "[host]", "[scratch]"))]
 
 
@@ -125,15 +128,37 @@ SKIP = {"work.tgz", "mcp.json", "raw.stderr",   # the work tarball is unreviewab
 SKIP_DIRS = {"media"}   # rendered from public/, never copied back into it
 
 
+def declared_vendors(run):
+    """Vendors whose throwaway keys this run had (comparison jobs declare them per product)."""
+    try:
+        b = json.loads((Path(run) / "brief.json").read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+    return list((b.get("product") or {}).get("keys") or [])
+
+
+def add_secret_rules(vendors):
+    """Exact key values (and their URL/base64 forms) become rules ahead of everything else."""
+    global R
+    if not vendors:
+        return
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import keys
+    R = [(re.compile(re.escape(v)), "[REDACTED:vendor-key]") for v in keys.secret_values(vendors)] + R
+
+
 def make_public(run):
     run = Path(run)
-    pub = run / "public"
-    keep = {n: redact((pub / n).read_text()) for n in ("post.md", "guide.md") if (pub / n).exists()}
+    vendors = declared_vendors(run)
+    add_secret_rules(vendors)
+    final = run / "public"
+    pub = run / "public.tmp"   # built aside and swapped in only when clean
+    keep = {n: redact((final / n).read_text()) for n in ("post.md", "guide.md") if (final / n).exists()}
     if pub.exists():
         shutil.rmtree(pub)
     n = 0
     for p in sorted(run.rglob("*")):
-        if p.is_dir() or pub in p.parents or p.name in SKIP or p.is_symlink() or SKIP_DIRS & set(p.relative_to(run).parts):
+        if p.is_dir() or pub in p.parents or final in p.parents or p.name in SKIP or p.is_symlink() or SKIP_DIRS & set(p.relative_to(run).parts):
             continue
         rel = p.relative_to(run)
         dest = pub / rel
@@ -153,14 +178,20 @@ def make_public(run):
         elif p.suffix in TEXT or ("work-files" in rel.parts and p.suffix in WORK_TEXT):
             dest.write_text(redact(p.read_text(errors="replace")))
             n += 1
-        elif p.suffix in COPY_BINARY:
+        elif p.suffix in COPY_BINARY and not vendors:   # a keyed run's binaries can't be scanned: withheld
             shutil.copy2(p, dest)
     for n, t in keep.items():
         (pub / n).write_text(t)
-    left = [(str(f), h) for f in pub.rglob("*") if f.is_file() and f.suffix in TEXT for h in hits(checkable(f))]
+    # Every file that isn't a copied binary gets scanned, names included.
+    left = [(str(f.relative_to(pub)), h) for f in pub.rglob("*") if f.is_file() and f.suffix not in COPY_BINARY
+            for h in hits(checkable(f) + "\n" + str(f.relative_to(pub)))]
     if left:
+        shutil.rmtree(pub)
         sys.exit(f"redaction left matches, refusing: {left[:5]}")
-    print(f"{n} files redacted into {pub}")
+    if final.exists():
+        shutil.rmtree(final)
+    pub.rename(final)
+    print(f"{n} files redacted into {final}")
 
 
 if __name__ == "__main__":

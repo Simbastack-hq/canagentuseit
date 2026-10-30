@@ -61,6 +61,7 @@ def decoys(job_dir, p, run_dir):
         cid = re.sub(r"[^a-z0-9-]", "-", f"{run_dir.name.lower()}-decoy{len(out)}")[-90:].strip("-")
         rc.box("start", cid)
         try:
+            put_keys(cid, p)
             if kind.startswith("decoy"):
                 put_dir(cid, job_dir / JOB["decoy"], "/work")
                 rc.box("exec", cid, "30", f"chmod +x /work/docsearch /work/start.sh /work/stop.sh && echo {kind[7:]} > /work/.decoy_mode")
@@ -70,6 +71,16 @@ def decoys(job_dir, p, run_dir):
         out.append({"kind": kind, "exit": code, "passed": res["passed"],
                     "failed_steps": [s["step"] for s in res["steps"] if not s["passed"]], "tail": text[-800:]})
     return {"passed": any(d["passed"] for d in out), "decoys": out}
+
+
+def put_keys(cid, p):
+    """Throwaway keys the product declares, into this run's box only (decision 0004). Never the brain's env."""
+    if not p.get("keys"):
+        return
+    import keys
+    for v, kv in keys.load(p["keys"]).items():
+        rc.box("put", cid, f"/tmp/keys/{v}.env", stdin=keys.env_file(kv).encode())
+    rc.box("exec", cid, "20", "chmod 700 /tmp/keys && chmod 600 /tmp/keys/*.env")
 
 
 def probe_version(cid, p):
@@ -113,6 +124,7 @@ def main():
         return
     scratch = Path(tempfile.mkdtemp(prefix="caui-scratch-"))
     try:
+        put_keys(cid, p)
         rc.box("put", cid, "/work/job/JOB.md", stdin=spec.encode())
         put_dir(cid, job_dir / JOB["fixtures"], "/work/job/fixtures")
         if agent == "claude":
