@@ -85,7 +85,7 @@ def kill_others():
     """Everything of ours outside this check's own process chain: what a reboot or crash does."""
     keep, n = ancestors(), 0
     for p in Path("/proc").iterdir():
-        if p.name.isdigit() and int(p.name) not in keep:
+        if p.name.isdigit() and int(p.name) > 1 and int(p.name) not in keep:
             try:
                 if p.stat().st_uid == os.getuid():
                     os.kill(int(p.name), signal.SIGKILL)
