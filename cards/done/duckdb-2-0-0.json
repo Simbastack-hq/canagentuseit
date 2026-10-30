@@ -1,7 +1,7 @@
 {
   "id": "duckdb-2-0-0",
   "created_at": "2026-10-30T09:00:00Z",
-  "status": "queued",
+  "status": "done",
   "tool": {
     "name": "DuckDB (Python client)",
     "vendor": "DuckDB Foundation / DuckDB Labs",
