@@ -134,7 +134,7 @@ def main():
             arc, timed_out = rc.run_codex(task, cid, d, scratch)
             model = rc.CODEX_MODEL
         wall = time.time() - t0
-        _, kout, _ = rc.box("exec", cid, "20", "echo before: $(ps -u dev -o pid= | wc -l) processes; kill -9 -1 2>/dev/null; sleep 1; echo after: $(ps -u dev -o pid= | wc -l) processes")
+        _, kout, _ = rc.box("exec", cid, "20", rc.KILL_LEFTOVERS)
         (d / "cleanup.out").write_text(kout)
         ccode, cout, cres = run_check(cid, job_dir, p)
         (d / "check.out").write_text(cout)

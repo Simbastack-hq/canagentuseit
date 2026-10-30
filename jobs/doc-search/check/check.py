@@ -83,11 +83,24 @@ def ancestors():
     return out
 
 
+def box_keepalive():
+    """The box's own `sleep` under tini (PID 1): killing it stops the container, so it's spared."""
+    out = set()
+    for p in Path("/proc").iterdir():
+        try:
+            if p.name.isdigit() and next(l for l in open(p / "status") if l.startswith("PPid:")).split()[1] == "1" \
+                    and (p / "cmdline").read_bytes().split(b"\0")[0] in (b"sleep", b"/usr/bin/sleep"):
+                out.add(int(p.name))
+        except (OSError, StopIteration):
+            pass
+    return out
+
+
 def kill_others():
     """Everything of ours outside this check's own process chain: what a reboot or crash does."""
-    keep, n = ancestors(), 0
+    keep, n = ancestors() | box_keepalive() | {1}, 0
     for p in Path("/proc").iterdir():
-        if p.name.isdigit() and int(p.name) > 1 and int(p.name) not in keep:
+        if p.name.isdigit() and int(p.name) not in keep:
             try:
                 if p.stat().st_uid == os.getuid():
                     os.kill(int(p.name), signal.SIGKILL)

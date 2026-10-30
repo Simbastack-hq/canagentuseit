@@ -48,6 +48,39 @@ CODEX_OFF = ["shell_tool", "unified_exec", "unified_exec_tty", "view_image", "ap
              "code_mode", "code_mode_host", "code_mode_interrupt", "code_mode_only"]
 
 
+# Kill every process the agent left in the box, except PID 1 (tini), the box's own `sleep` under it
+# (killing that stops the container) and this command's own process chain.
+KILL_LEFTOVERS = r"""python3 - <<'EOF'
+import os, signal, time
+from pathlib import Path
+def ppid(p):
+    try:
+        return int(next(l for l in open(f"/proc/{p}/status") if l.startswith("PPid:")).split()[1])
+    except (OSError, StopIteration):
+        return 0
+keep, p = {1, os.getpid()}, os.getpid()
+while p > 1:
+    p = ppid(p); keep.add(p)
+procs = [int(x.name) for x in Path("/proc").iterdir() if x.name.isdigit()]
+mine = [p for p in procs if Path(f"/proc/{p}").stat().st_uid == os.getuid()] if procs else []
+for p in procs:
+    try:
+        if ppid(p) == 1 and Path(f"/proc/{p}/cmdline").read_bytes().split(b"\0")[0] in (b"sleep", b"/usr/bin/sleep"):
+            keep.add(p)
+    except OSError:
+        pass
+left = [p for p in mine if p not in keep]
+print(f"before: {len(left)} leftover processes")
+for p in left:
+    try:
+        os.kill(p, signal.SIGKILL)
+    except OSError:
+        pass
+time.sleep(1)
+print(f"after: {sum(1 for p in left if Path(f'/proc/{p}').exists() and Path(f'/proc/{p}/stat').read_text().split()[2] != 'Z')} still running")
+EOF"""
+
+
 def box(*args, stdin=None, timeout=1000, binary=False):
     p = subprocess.run(BOX + list(args), input=stdin, capture_output=True, timeout=timeout)
     out = p.stdout if binary else p.stdout.decode("utf-8", "replace")
@@ -196,7 +229,7 @@ def attempt(n, agent, brief, run_dir):
             (d / "agent.exit").write_text("124")
         chk = brief["check"]
         # Leftover background processes must not make an incomplete run.sh pass.
-        _, kout, _ = box("exec", cid, "20", "echo before: $(ps -u dev -o pid= | wc -l) processes; kill -9 -1 2>/dev/null; sleep 1; echo after: $(ps -u dev -o pid= | wc -l) processes")
+        _, kout, _ = box("exec", cid, "20", KILL_LEFTOVERS)
         (d / "cleanup.out").write_text(kout)
         crc, cout, _ = box("exec", cid, "180", chk["command"])
         (d / "check.out").write_text(cout)
