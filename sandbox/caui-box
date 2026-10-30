@@ -24,6 +24,7 @@ HOME="$(getent passwd "$(id -un)" | cut -d: -f6)"; export HOME
 if [ -n "${SUDO_USER:-}" ]; then
   ENGINE=/usr/bin/podman; CONF="$HOME/.config/caui"; HARNESS=/srv/caui/harness
   export PATH=/usr/local/bin:/usr/bin:/bin
+  cd "$HOME"   # the caller's cwd (the brain user's home) is unreadable to caui-tester and podman fails on it
 else
   ENGINE="${CAUI_ENGINE:-podman}"; CONF="${CAUI_CONF:-$HOME/.config/caui}"; HARNESS="${CAUI_HARNESS:-/srv/caui/harness}"
 fi
