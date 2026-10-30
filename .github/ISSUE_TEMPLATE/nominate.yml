@@ -1,0 +1,20 @@
+name: Nominate a tool
+description: Suggest a tool for an agent to test. v1 tests quickstarts that need no account or API key.
+title: "Nominate: <tool>"
+labels: [nomination]
+body:
+  - type: input
+    id: quickstart
+    attributes: {label: Quickstart URL, description: "Public page, no login needed"}
+    validations: {required: true}
+  - type: textarea
+    id: why
+    attributes: {label: Why builders care, description: "Who uses it, what for"}
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Eligibility
+      options:
+        - label: The quickstart's first task needs no account, API key or login
+        - label: It runs on Linux x86-64 without a GPU
+        - label: I'm (or am not) affiliated with the tool, and I've said which above

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canagentuseit.com/schema/result.json",
+  "title": "Test result",
+  "description": "Written by the harness (sandbox/run-card.sh + tools/verdict.py), never by a model. One per card run, in results/<date>-<card id>/result.json, next to one folder per attempt.",
+  "type": "object",
+  "required": ["card_id", "run_id", "date", "tool", "version", "docs_url", "task", "attempts", "verdict", "verdict_reason", "evidence_ok", "totals"],
+  "properties": {
+    "card_id": { "type": "string" },
+    "run_id": { "type": "string", "description": "<UTC date>T<time>Z-<card id>" },
+    "date": { "type": "string", "format": "date" },
+    "tool": { "type": "object" },
+    "version": { "type": "object" },
+    "docs_url": { "type": "string" },
+    "task": { "type": "string", "description": "Exactly the text the agent received, contract sentence included" },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["n", "model", "agent", "image", "started_at", "wall_seconds", "cost_usd", "turns", "stop_reason", "check", "evidence", "urls_fetched", "files"],
+        "properties": {
+          "n": { "type": "integer" },
+          "model": { "type": "string" },
+          "agent": { "type": "string", "description": "e.g. claude-code 2.1.311" },
+          "image": { "type": "string" },
+          "started_at": { "type": "string" },
+          "wall_seconds": { "type": "number" },
+          "cost_usd": { "type": ["number", "null"] },
+          "turns": { "type": ["integer", "null"] },
+          "stop_reason": { "type": "string", "description": "done | timeout | budget | max_turns | error" },
+          "agent_said": { "type": "string", "description": "The agent's final message, trimmed" },
+          "check": {
+            "type": "object",
+            "properties": {
+              "ran": { "type": "boolean" },
+              "exit": { "type": ["integer", "null"] },
+              "passed": { "type": "boolean" },
+              "output_tail": { "type": "string" }
+            }
+          },
+          "evidence": {
+            "type": "object",
+            "properties": {
+              "transcript_ok": { "type": "boolean" },
+              "version_seen": { "type": ["string", "null"] },
+              "version_ok": { "type": "boolean" },
+              "references_tool": { "type": "boolean" },
+              "fetched_docs": { "type": "boolean" },
+              "check_ran": { "type": "boolean" }
+            }
+          },
+          "urls_fetched": { "type": "array", "items": { "type": "string" } },
+          "files": { "type": "object", "description": "transcript.jsonl, transcript.md, terminal.cast, docs-walk.webm, work.tgz paths relative to the result folder" }
+        }
+      }
+    },
+    "verdict": { "enum": ["works", "partly", "couldnt", "inconclusive"] },
+    "verdict_reason": { "type": "string" },
+    "evidence_ok": { "type": "boolean" },
+    "totals": {
+      "type": "object",
+      "properties": {
+        "cost_usd": { "type": "number" },
+        "minutes_to_success": { "type": ["number", "null"] },
+        "wall_minutes": { "type": "number" }
+      }
+    },
+    "post": {
+      "type": "object",
+      "description": "Filled by caui-write",
+      "properties": {
+        "status": { "enum": ["draft", "published", "abstained"] },
+        "post_id": { "type": "string" },
+        "slug": { "type": "string" },
+        "preview_url": { "type": "string" },
+        "post_url": { "type": "string" },
+        "drafted_at": { "type": "string" }
+      }
+    }
+  }
+}

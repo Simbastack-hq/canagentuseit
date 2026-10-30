@@ -1,0 +1,56 @@
+{
+  "id": "gemini-4-carbon-gemini-4-carbon",
+  "created_at": "2026-10-29T20:30:00Z",
+  "status": "skipped",
+  "skip_reason": "Not available to developers: limited to selected cyber defenders and trusted partners; no public API model id or quickstart yet. Re-scout when it lands on the Gemini API models page.",
+  "tool": {
+    "name": "Gemini 4 Carbon",
+    "vendor": "Google",
+    "kind": "model-api",
+    "homepage": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/"
+  },
+  "version": {
+    "pinned": "gemini-4-carbon",
+    "source": "model-id",
+    "package": "Gemini API",
+    "released_at": "2026-10-28"
+  },
+  "docs_url": "https://ai.google.dev/gemini-api/docs/models",
+  "brief": {
+    "task": "Not runnable yet. When Gemini 4 Carbon is available on the Gemini API, follow the Gemini API quickstart's first request using the gemini-4-carbon model and print the model's text reply.",
+    "env": ["GEMINI_API_KEY"]
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "\\w+",
+    "version_probe": "cd /work && grep -rhoE 'gemini-4-carbon[-0-9a-z]*' . | sort -u",
+    "must_reference": ["gemini-4-carbon"]
+  },
+  "eligibility": {
+    "public_docs": false,
+    "needs_signup": false,
+    "needs_key": "GEMINI_API_KEY",
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Watched vendor (Google) launch; 997 HN points, plus 323 for the Artificial Analysis #1 post"
+  },
+  "scout": {
+    "why_notable": "Google's new frontier model, #1 on Artificial Analysis Intelligence Index v5 (59). 997 HN points. Developer access is 'coming soon'.",
+    "launch_claims": [
+      {
+        "claim": "Introductory API pricing of $2 per 1M input tokens and $10 per 1M output tokens, rising to $4 / $20 after the introductory period.",
+        "source_url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/",
+        "testable_how": "Check the Gemini API pricing page once the model is public.",
+        "revisit_after": "2026-11-27"
+      }
+    ],
+    "sources": [
+      "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-carbon/",
+      "https://artificialanalysis.ai/articles/gemini-4-carbon-new-number-1",
+      "https://ai.google.dev/gemini-api/docs/models"
+    ],
+    "found_via": "HN front page (Algolia, points>50, last 24h)",
+    "notes": "Model id is a guess; Google has not published one. Gemini API models page currently lists gemini-4-argon as newest."
+  }
+}

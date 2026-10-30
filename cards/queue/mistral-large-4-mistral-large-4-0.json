@@ -1,0 +1,68 @@
+{
+  "id": "mistral-large-4-mistral-large-4-0",
+  "created_at": "2026-10-29T20:30:00Z",
+  "status": "needs_key",
+  "tool": {
+    "name": "Mistral Large 4",
+    "vendor": "Mistral AI",
+    "kind": "model-api",
+    "homepage": "https://mistral.ai/news/mistral-large-4-oss/"
+  },
+  "version": {
+    "pinned": "mistral-large-4-0",
+    "source": "model-id",
+    "package": "mistral-large-4-0 (via mistralai 3.6.0 on PyPI)",
+    "released_at": "2026-10-29"
+  },
+  "docs_url": "https://docs.mistral.ai/getting-started/quickstarts/developer/first-api-request",
+  "brief": {
+    "task": "Following Mistral's 'Send your first API request' quickstart, set up the official Python SDK and send a first chat request to the mistral-large-4-0 model asking \"What is Mistral AI?\". Use the MISTRAL_API_KEY from the environment. The goal is a Python script that prints the model's short description of Mistral AI.",
+    "env": ["MISTRAL_API_KEY"]
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "(?i)(Paris|French|France|large language models?|open[- ]weight)",
+    "version_probe": "cd /work && grep -rhoE 'mistral-large-4[-0-9a-z]*' --include=*.py . | sort -u; (uv run python -c 'import importlib.metadata as m;print(m.version(\"mistralai\"))' || .venv/bin/python -c 'import importlib.metadata as m;print(m.version(\"mistralai\"))' || python3 -c 'import importlib.metadata as m;print(m.version(\"mistralai\"))')",
+    "must_reference": ["mistralai", "mistral-large-4"]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": "MISTRAL_API_KEY",
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Watched vendor (Mistral) launch; 977 HN points in under 6h"
+  },
+  "scout": {
+    "why_notable": "Mistral open-sourced the weights of Large 4 (1T params, ~52B active) today; 977 HN points. Weights are far too big for the sandbox, so the card tests the hosted API path.",
+    "launch_claims": [
+      {
+        "claim": "Pricing is $0.70 per million input tokens, $0.07 cached input, and $2.10 per million output tokens.",
+        "source_url": "https://mistral.ai/news/mistral-large-4-oss/",
+        "testable_how": "Compare against the pricing page and the usage/cost reported for a fixed prompt at revisit.",
+        "revisit_after": "2026-11-28"
+      },
+      {
+        "claim": "Three reasoning modes: Low, Medium and High (default).",
+        "source_url": "https://mistral.ai/news/mistral-large-4-oss/",
+        "testable_how": "Call the API with each reasoning setting the docs expose and confirm all three are accepted and High is the default.",
+        "revisit_after": "2026-11-28"
+      },
+      {
+        "claim": "Weights released under the Mistral Ecosystem Open-Weight license (modified MIT) at huggingface.co/mistralai/Mistral-Large-4-1T-A52B.",
+        "source_url": "https://mistral.ai/news/mistral-large-4-oss/",
+        "testable_how": "Confirm the Hugging Face repo is public and downloadable without gating, and the license file matches.",
+        "revisit_after": "2026-11-28"
+      }
+    ],
+    "sources": [
+      "https://mistral.ai/news/mistral-large-4-oss/",
+      "https://docs.mistral.ai/models/mistral-large-4-0",
+      "https://docs.mistral.ai/getting-started/quickstarts/developer/first-api-request",
+      "https://pypi.org/project/mistralai/"
+    ],
+    "found_via": "HN front page (Algolia, points>50, last 24h)",
+    "notes": "Model id is not labelled explicitly on the model page: the Compare link uses mistral-large-4-0, a heading shows 'mistral-large-4+1'. Re-check the id in the API reference before running. The quickstart's own example uses mistral-large-latest; the brief pins mistral-large-4-0 instead. Model page lists public preview 2026-10-06 (v26.10); open weights released 2026-10-29."
+  }
+}

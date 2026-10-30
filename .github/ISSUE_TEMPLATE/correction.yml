@@ -1,0 +1,21 @@
+name: Correction request
+description: A result or post is wrong, out of date, or unfair. Vendors and readers both welcome.
+title: "Correction: <tool> <version> (<run id>)"
+labels: [correction]
+body:
+  - type: input
+    id: run
+    attributes: {label: Run id or post link, description: "From the post footer or results/<run id>/"}
+    validations: {required: true}
+  - type: textarea
+    id: wrong
+    attributes: {label: What's wrong, description: "Quote the line in the post or transcript, and say what's true instead."}
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Evidence, description: "Doc page, release, commit or changelog that shows it. If a newer version fixes it, name the version."}
+  - type: dropdown
+    id: who
+    attributes: {label: You are, options: ["The tool's maintainer or vendor", "A user of the tool", "Other"]}
+  - type: markdown
+    attributes: {value: "We re-run the same task on the version you name and add a dated note to the post. The original result stays in `results/`. Requests are handled by a human, usually within 3 working days."}

@@ -1,0 +1,38 @@
+# caui-sandbox: the box the test agent works in, through caui-box. A plain Linux dev machine:
+# Python 3.11 + uv, Node 22 + npm, git, build tools, curl, PostgreSQL 17 + pgvector (not running).
+# User `dev`, no sudo.
+# No agent and no credentials inside: the agent's brain runs outside and only sends commands in.
+# Rebuilt on purpose (never implicitly): tag caui-sandbox:<YYYYMMDD>; the tag goes into every result.
+# Build from the repo root: podman build -f sandbox/Containerfile -t caui-sandbox:<YYYYMMDD> .
+FROM docker.io/library/node:22-bookworm
+
+ARG UV_VERSION=0.13.6
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-venv python3-pip python3-dev build-essential pkg-config \
+      git curl wget ca-certificates jq unzip xz-utils less procps tini \
+  && rm -rf /var/lib/apt/lists/*
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+
+# PostgreSQL 17 + pgvector from the PostgreSQL apt repo, installed but not initialised or running
+# (comparison jobs that use Postgres start their own server as `dev`).
+RUN install -d /etc/postgresql-common /usr/share/postgresql-common/pgdg \
+  && echo "create_main_cluster = false" > /etc/postgresql-common/createcluster.conf \
+  && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+  && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update && apt-get install -y --no-install-recommends postgresql-17 postgresql-17-pgvector \
+  && rm -rf /var/lib/apt/lists/*
+
+# The node image ships user `node` (uid 1000); rename it `dev`. npm global installs go to ~/.npm-global.
+RUN usermod -l dev -d /home/dev -m node && groupmod -n dev node \
+  && mkdir -p /work && chown dev:dev /work
+ENV HOME=/home/dev NPM_CONFIG_PREFIX=/home/dev/.npm-global \
+    PATH=/home/dev/.npm-global/bin:/home/dev/.local/bin:/usr/local/bin:/usr/bin:/bin \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 TERM=xterm-256color
+USER dev
+WORKDIR /work
+# A real init as PID 1 so killed daemons get reaped (with plain `sleep` as PID 1, a killed Postgres
+# stayed a zombie and its lock files looked live: our box's fault, not the product's).
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["sleep", "infinity"]

@@ -1,0 +1,8 @@
+# caui-recorder: records a browser video of the docs pages the test agent read (YouTube B-roll).
+# Runs after the attempt, in its own container; it never shares anything with the agent's box.
+# Build from the repo root: podman build -f sandbox/Containerfile.recorder -t caui-recorder:<YYYYMMDD> .
+FROM mcr.microsoft.com/playwright:v1.64.1-noble
+WORKDIR /rec
+RUN npm init -y >/dev/null && npm install playwright@1.64.1 && npm cache clean --force
+COPY sandbox/docs-walk.js /rec/docs-walk.js
+CMD ["node", "/rec/docs-walk.js"]

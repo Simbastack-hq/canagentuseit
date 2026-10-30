@@ -1,0 +1,55 @@
+{
+  "id": "lancedb-0-41-0",
+  "created_at": "2026-10-29T21:00:00Z",
+  "status": "done",
+  "tool": {
+    "name": "LanceDB",
+    "vendor": "LanceDB",
+    "kind": "sdk",
+    "homepage": "https://lancedb.com/"
+  },
+  "version": {
+    "pinned": "0.41.0",
+    "source": "pypi",
+    "package": "lancedb"
+  },
+  "docs_url": "https://docs.lancedb.com/quickstart",
+  "brief": {
+    "task": "Using lancedb 0.41.0, follow the LanceDB quickstart with a local database: connect, create the quickstart's \"characters\" table from its example data, then run the quickstart's vector search with its query vector, selecting name, role, description and distance, limited to 2 results. Print the result as the quickstart does.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "(?s)shape: \\(2, 4\\).*_distance",
+    "version_probe": "cd /work && (uv run python -c 'import lancedb;print(lancedb.__version__)' || .venv/bin/python -c 'import lancedb;print(lancedb.__version__)' || python3 -c 'import lancedb;print(lancedb.__version__)')",
+    "must_reference": [
+      "lancedb"
+    ]
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Backlog: LanceDB is on the WATCHLIST backlog (possibly also a new minor released today, unverified)"
+  },
+  "scout": {
+    "why_notable": "Backlog pick. Embedded vector DB used for agent memory; 0.41.0 may have shipped today. Quickstart's example data sits in a collapsed block and the search step needs an extra package (polars), both real stumbling points.",
+    "launch_claims": [
+      {
+        "claim": "On x86_64 CPUs without AVX2, `import lancedb` crashes with `Illegal instruction`; use `lancedb-compat` instead.",
+        "source_url": "https://pypi.org/project/lancedb/",
+        "testable_how": "Note the sandbox CPU flags in the run; if AVX2 is absent, confirm the crash and the compat package.",
+        "revisit_after": "2026-11-28"
+      }
+    ],
+    "sources": [
+      "https://docs.lancedb.com/quickstart",
+      "https://pypi.org/pypi/lancedb/json"
+    ],
+    "found_via": "WATCHLIST backlog; version from PyPI JSON",
+    "notes": "PyPI upload of 0.41.0 reported as 2026-10-29T09:10 but unverified, so released_at left out and notability claimed via backlog. The check expects polars' printed frame header (2 rows x 4 columns incl. _distance); if the agent prints with to_pandas instead the check fails, but the docs say to_polars."
+  }
+}

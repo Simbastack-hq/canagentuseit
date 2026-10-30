@@ -1,0 +1,25 @@
+$ ./docsearch query job/fixtures/query-0.json
+doc-00009
+doc-00015
+doc-00007
+doc-00000
+doc-00013
+
+$ ./docsearch query job/fixtures/query-1.json
+doc-00017
+doc-00007
+doc-00005
+doc-00011
+doc-00016
+
+$ ./docsearch query job/fixtures/query-2.json
+doc-00002
+doc-00019
+doc-00001
+doc-00006
+doc-00000
+
+$ ./docsearch query job/fixtures/query-0.json --k 3 --category docs
+doc-00009
+doc-00003
+doc-00018

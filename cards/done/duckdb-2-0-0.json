@@ -1,0 +1,71 @@
+{
+  "id": "duckdb-2-0-0",
+  "created_at": "2026-10-30T09:00:00Z",
+  "status": "done",
+  "tool": {
+    "name": "DuckDB (Python client)",
+    "vendor": "DuckDB Foundation / DuckDB Labs",
+    "kind": "sdk",
+    "homepage": "https://duckdb.org/"
+  },
+  "version": {
+    "pinned": "2.0.0",
+    "source": "pypi",
+    "package": "duckdb",
+    "released_at": "2026-10-21"
+  },
+  "docs_url": "https://duckdb.org/docs/2.0/clients/python/overview.html",
+  "brief": {
+    "task": "Using duckdb 2.0.0 from Python, follow the first examples in the DuckDB Python client overview. Run the `SELECT 42` query and show its result, then define the relation `r1` as `SELECT 42 AS i` and query it with `SELECT i * 2 AS k FROM r1`, showing that result too. Both results should be printed with DuckDB's own `.show()` output.",
+    "env": []
+  },
+  "check": {
+    "command": "bash /work/run.sh",
+    "expect_exit": 0,
+    "stdout_regex": "(?s)[│|]\\s*42\\s*[│|].*[│|]\\s*k\\s*[│|].*[│|]\\s*84\\s*[│|]",
+    "version_probe": "cd /work && (uv run python -c 'import duckdb;print(duckdb.__version__)' || .venv/bin/python -c 'import duckdb;print(duckdb.__version__)' || python3 -c 'import duckdb;print(duckdb.__version__)')",
+    "must_reference": [
+      "duckdb"
+    ],
+    "decoy_script": "#!/bin/bash\n# prints the expected values without DuckDB's table rendering and without running a query\necho 42\necho k\necho 84\n"
+  },
+  "eligibility": {
+    "public_docs": true,
+    "needs_signup": false,
+    "needs_key": null,
+    "agent_builder_relevant": true,
+    "runnable_in_sandbox": true,
+    "notable_because": "Launch: new major (2.0.0, LTS) of duckdb, a PyPI package well over 100k weekly downloads; released 2026-10-21"
+  },
+  "scout": {
+    "why_notable": "First DuckDB major in years: 2.0.0 LTS (21 Oct 2026), ~20,000 commits since 1.5, supported to at least Oct 2027, raises the Python floor to 3.11 and changes the default storage format. Agents use DuckDB as their scratch SQL engine, so 1.x-vs-2.x drift in what they remember is a real risk.",
+    "launch_claims": [
+      {
+        "claim": "DuckDB 2.0 was \"built from close to 20,000 commits since DuckDB 1.5\" and is an LTS release \"with support until at least October 2027\".",
+        "source_url": "https://duckdb.org/2026/10/21/announcing-duckdb-200.html",
+        "testable_how": "Not directly testable; revisit to confirm 2.0.x patch releases are still shipping.",
+        "revisit_after": "2026-11-20"
+      },
+      {
+        "claim": "\"In our experiments on TPC-H, agent mode cut the amount of DuckDB output the model had to read by 59%.\"",
+        "source_url": "https://duckdb.org/2026/10/21/announcing-duckdb-200.html",
+        "testable_how": "Separate card: run the same TPC-H questions with an agent with and without agent mode and compare bytes of DuckDB output read.",
+        "revisit_after": "2026-11-20"
+      },
+      {
+        "claim": "\"DuckDB 1.5 cannot open a database file that DuckDB 2.0 wrote in its default format\"; passing storage_compatibility_version keeps files readable by 1.5.",
+        "source_url": "https://duckdb.org/docs/2.0/clients/python/overview.html",
+        "testable_how": "Write file.db with 2.0.0 default and with storage_compatibility_version='v1.5.0', open each with duckdb 1.5.x.",
+        "revisit_after": "2026-11-20"
+      }
+    ],
+    "sources": [
+      "https://duckdb.org/2026/10/21/announcing-duckdb-200.html",
+      "https://github.com/duckdb/duckdb/releases/tag/v2.0.0",
+      "https://duckdb.org/docs/2.0/clients/python/overview.html",
+      "https://pypi.org/pypi/duckdb/2.0.0/json"
+    ],
+    "found_via": "PyPI version check of watched packages (duckdb 2.0.0, uploaded 2026-10-21T12:50Z); not on HN in the last 24h",
+    "notes": "Launched 9 days ago, not within the 24h window, but it's a new major and was never carded. Docs give `pip install duckdb` in running text and require Python 3.11+. Neither snippet shows its output on the page; the check relies on .show()'s box rendering (│ or | accepted) with 42, the column name k and the computed 84. Codename differs between the blog (\"Cinnamon Teal\") and the GitHub release (\"Cyanoptera\"). Slate gap: the overview's persistent-storage example (state across a restart) is not part of the first task, so it's left out."
+  }
+}
